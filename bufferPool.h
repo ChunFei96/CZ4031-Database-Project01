@@ -59,7 +59,5 @@ public:
     uint getTotalRecordSize();
 
     int getNumOfBlkAlloc();
-
-    int getNumOfBlkAvail();
 };
 #endif

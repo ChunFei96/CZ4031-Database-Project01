@@ -111,8 +111,3 @@ int bufferPool::getNumOfBlkAlloc()
 {
     return numBlkAlloc;
 }
-
-int bufferPool::getNumOfBlkAvail()
-{
-    return numBlkAvail;
-}

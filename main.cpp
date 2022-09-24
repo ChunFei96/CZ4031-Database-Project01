@@ -33,21 +33,19 @@ int main()
                     // cout << "\n";
 
                     Record record;
-                    Location dataRecord;
+                    Location location;
                     string token;
 
-                    // Get the data of tconst before the tab delimiter
                     strcpy(record.tconst, line.substr(0, line.find('\t')).c_str());
-                    // Get individual data seperated by space after the tab delimiter
                     stringstream ss(line);
                     getline(ss, token, '\t');
                     ss >> record.avgRating >> record.numVotes;
 
-                    dataRecord = bufferPool.insertRecord(sizeof(record));
-                    dataset.push_back(dataRecord);
+                    location = bufferPool.insertRecord(sizeof(record));
+                    dataset.push_back(location);
 
-                    void *recordLocation = (uchar *)dataRecord.blockLocation + dataRecord.offset;
-                    memcpy(recordLocation, &record, sizeof(record));
+                    void *memoryLocation = (uchar *)location.blockLocation + location.offset;
+                    memcpy(memoryLocation, &record, sizeof(record));
                }
           }
 
@@ -56,7 +54,6 @@ int main()
                << endl;
           cout << "Number of blocks = " << bufferPool.getNumOfBlkAlloc() << endl;
           cout << "Size of Database = " << double(bufferPool.getTotalRecordSize()) / (1000 * 1000) << "MB" << endl;
-          cout << "Number of Blocks remaining = " << bufferPool.getNumOfBlkAvail() << endl;
 
           cout << "\n <------------------- Completed reading for block size  " << blockSize[i] << ".. ------------------->"
                << "\n \n";
