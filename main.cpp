@@ -76,7 +76,7 @@ int main()
           cout << "Parameter (n) of B+ Tree = " << MAX << endl;
           cout << "Number of Nodes of B+ Tree = " << tree.getNumOfNode() << endl;
           cout << "Height of the B+ Tree = " << tree.getTreeLvl() << endl;
-          tree.display(tree.getRoot(), tree.getNumOfNode(), 0);
+          tree.Display(tree.getRoot(), tree.getNumOfNode(), 0);
      }
 
      return 0;
