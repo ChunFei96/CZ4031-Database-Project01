@@ -36,7 +36,7 @@ class BPlusTree
 public:
 	BPlusTree()
 	{
-		buildBPlusTree(root);
+		CreateRootNode(root);
 	}
 
 	void insert(Location location, int keyToInsert, bool isTreeEmpty)
@@ -120,17 +120,10 @@ public:
 				// step 4: update the parent nodes
 				if (cursor == root)
 				{
-					//if cursor is a root node, we create a new root
-					Node* newRoot = new Node;
-					newRoot->key[0] = newLeaf->key[0];
-					newRoot->ptr[0] = cursor;
-					newRoot->ptr[1] = newLeaf;
-					newRoot->IS_LEAF = false;
-					newRoot->size = 1;
-					root = newRoot;
-					//increase number of node and tree level by 1
-					numOfNode += 1;
-					heightOfTree += 1;
+					//if cursor is a root node, we create a new parent root
+					Node* parentRoot = new Node;
+					CreateParentNode(parentRoot, cursor, newLeaf);
+					
 				}
 				else
 				{
@@ -314,7 +307,7 @@ public:
 		}
 	}
 
-	void buildBPlusTree(Node* &root) {
+	void CreateRootNode(Node* &root) {
 		root = new Node;
 		root->IS_LEAF = true;
 		root->size = 1;
@@ -366,6 +359,18 @@ public:
 			currentNode->key[i] = tempKeys[i];
 			currentNode->llPtr[i] = tempLLPtrList[i];
 		}
+	}
+
+	void CreateParentNode(Node* parentRoot, Node* firstLeafNode, Node* secondLeafNode) {
+		parentRoot->key[0] = secondLeafNode->key[0];
+		parentRoot->ptr[0] = firstLeafNode;
+		parentRoot->ptr[1] = secondLeafNode;
+		parentRoot->IS_LEAF = false;
+		parentRoot->size = 1;
+
+		root = parentRoot;
+		numOfNode += 1;
+		heightOfTree += 1;
 	}
 
 	int getNumOfNode()
