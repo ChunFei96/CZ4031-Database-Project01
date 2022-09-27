@@ -39,7 +39,8 @@ public:
 		CreateRootNode(root);
 	}
 
-	void insert(Location location, int keyToInsert, bool isTreeEmpty)
+#pragma region Insert main function
+	void Insert(Location location, int keyToInsert, bool isTreeEmpty)
 	{
 		// when the B+ Tree is empty
 		if (isTreeEmpty)
@@ -55,7 +56,7 @@ public:
 			Node* cursor = root;
 			Node* parent = NULL;
 			LLNode* listHead = NULL;
-			
+
 			while (!cursor->IS_LEAF)
 			{
 				parent = cursor;
@@ -113,7 +114,7 @@ public:
 
 				// step 2: create a new leaf node
 				Node* newLeaf = CreateLeafNode(cursor->ptr[MAX], tempKey, tempLLPtrList);
-				
+
 				// step 3: reconstruct the current node
 				ReconstructCurrentNode(cursor, newLeaf, tempKey, tempLLPtrList);
 
@@ -123,7 +124,7 @@ public:
 					//if cursor is a root node, we create a new parent root
 					Node* parentRoot = new Node;
 					CreateParentNode(parentRoot, cursor, newLeaf);
-					
+
 				}
 				else
 				{
@@ -133,7 +134,57 @@ public:
 			}
 		}
 	}
+#pragma endregion
 
+#pragma region Display main function
+	void Display(Node* cursor, int level, int child)
+	{
+		if (cursor != NULL and level >= 0)
+		{
+			if (child == 0)
+				cout << "Content of root Node = ";
+			else
+				cout << "Content of " << child << " Child Node = ";
+
+			for (int i = 0; i < cursor->size; i++)
+			{
+				cout << cursor->key[i] << " ";
+			}
+			cout << "\n";
+			if (cursor->IS_LEAF != true)
+			{
+				for (int i = 0; i < cursor->size + 1; i++)
+				{
+					display(cursor->ptr[i], --level, ++child);
+				}
+			}
+		}
+	}
+#pragma endregion
+
+	int getNumOfNode()
+	{
+		return numOfNode;
+	}
+
+	int getTreeLvl()
+	{
+		return heightOfTree;
+	}
+
+	int getNumOfNodeDel()
+	{
+		return numOfNodeDel;
+	}
+
+	Node* getRoot()
+	{
+		return root;
+	}
+
+private:
+
+#pragma region Insert sub functions
 	void insertInternal(int x, Node* cursor, Node* child)
 	{
 		if (cursor->size < MAX)
@@ -283,30 +334,6 @@ public:
 		newNode->size = tempSize;
 	}
 
-	void display(Node* cursor, int level, int child)
-	{
-		if (cursor != NULL and level >= 0)
-		{
-			if (child == 0)
-				cout << "Content of root Node = ";
-			else
-				cout << "Content of " << child << " Child Node = ";
-
-			for (int i = 0; i < cursor->size; i++)
-			{
-				cout << cursor->key[i] << " ";
-			}
-			cout << "\n";
-			if (cursor->IS_LEAF != true)
-			{
-				for (int i = 0; i < cursor->size + 1; i++)
-				{
-					display(cursor->ptr[i], --level, ++child);
-				}
-			}
-		}
-	}
-
 	void CreateRootNode(Node* &root) {
 		root = new Node;
 		root->IS_LEAF = true;
@@ -372,24 +399,7 @@ public:
 		numOfNode += 1;
 		heightOfTree += 1;
 	}
+#pragma endregion
 
-	int getNumOfNode()
-	{
-		return numOfNode;
-	}
 
-	int getTreeLvl()
-	{
-		return heightOfTree;
-	}
-
-	int getNumOfNodeDel()
-	{
-		return numOfNodeDel;
-	}
-
-	Node* getRoot()
-	{
-		return root;
-	}
 };

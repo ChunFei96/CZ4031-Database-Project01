@@ -71,7 +71,7 @@ int main()
 
               void* mainMemoryAddress = (uchar*)dataset[i].blockLocation + dataset[i].offset;
               uint numVotes = (*(Record*)mainMemoryAddress).numVotes;
-              tree.insert(dataset[i], numVotes, isTreeEmpty);
+              tree.Insert(dataset[i], numVotes, isTreeEmpty);
           }
           cout << "Parameter (n) of B+ Tree = " << MAX << endl;
           cout << "Number of Nodes of B+ Tree = " << tree.getNumOfNode() << endl;
