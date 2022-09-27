@@ -4,6 +4,7 @@
 #include <vector>
 #include <cstring>
 #include "bufferPool.h"
+#include "BPlusTree.cpp"
 
 using namespace std;
 
@@ -19,7 +20,7 @@ int main()
                << "\n";
 
           fstream file;
-          file.open("data/data_less.tsv", ios::in);
+          file.open("data/data_12.tsv", ios::in);
 
           bufferPool bufferPool{MEMORY, blockSize[i]};
           vector<Location> dataset;
@@ -27,6 +28,9 @@ int main()
           if (file.is_open())
           {
                string line;
+
+               // skip title
+               getline(file, line);
                while (getline(file, line))
                {
                     // cout << line;
@@ -36,7 +40,7 @@ int main()
                     Location location;
                     string token;
 
-                    strcpy(record.tconst, line.substr(0, line.find('\t')).c_str());
+                    strcpy_s(record.tconst, line.substr(0, line.find('\t')).c_str());
                     stringstream ss(line);
                     getline(ss, token, '\t');
                     ss >> record.avgRating >> record.numVotes;
@@ -57,6 +61,22 @@ int main()
 
           cout << "\n <------------------- Completed reading for block size  " << blockSize[i] << ".. ------------------->"
                << "\n \n";
+
+          BPlusTree tree;
+          bool isTreeEmpty = true;
+          cout << endl << "------------------------Experiment 2------------------------" << endl << endl;
+          for (int i = 0; i < dataset.size(); ++i) {
+              if (i > 0)
+                  isTreeEmpty = false;
+
+              void* mainMemoryAddress = (uchar*)dataset[i].blockLocation + dataset[i].offset;
+              uint numVotes = (*(Record*)mainMemoryAddress).numVotes;
+              tree.insert(dataset[i], numVotes, isTreeEmpty);
+          }
+          cout << "Parameter (n) of B+ Tree = " << MAX << endl;
+          cout << "Number of Nodes of B+ Tree = " << tree.getNumOfNode() << endl;
+          cout << "Height of the B+ Tree = " << tree.getTreeLvl() << endl;
+          tree.display(tree.getRoot(), tree.getNumOfNode(), 0);
      }
 
      return 0;
