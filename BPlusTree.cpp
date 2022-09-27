@@ -185,20 +185,20 @@ public:
 private:
 
 #pragma region Insert sub functions
-	void insertInternal(int x, Node* cursor, Node* child)
+	void insertInternal(int keyToInsert, Node* cursor, Node* child)
 	{
 		if (cursor->size < MAX)
 		{
 			//cursor not full, find position to insert new key
 			int i = 0;
-			while (x > cursor->key[i] && i < cursor->size) i++;
+			while (keyToInsert > cursor->key[i] && i < cursor->size) i++;
 			//make space for new key
 			for (int j = cursor->size;j > i; j--)
 				cursor->key[j] = cursor->key[j - 1];
 			//make space for new pointer
 			for (int j = cursor->size + 1; j > i + 1; j--)
 				cursor->ptr[j] = cursor->ptr[j - 1];
-			cursor->key[i] = x;
+			cursor->key[i] = keyToInsert;
 			cursor->size++;
 			cursor->ptr[i + 1] = child;
 		}
@@ -216,12 +216,12 @@ private:
 			for (int i = 0; i < MAX + 1; i++)
 				tempPtr[i] = cursor->ptr[i];
 			int i = 0, j;
-			while (x > tempKey[i] && i < MAX) i++;
+			while (keyToInsert > tempKey[i] && i < MAX) i++;
 			//make space for new key
 			for (int j = MAX + 1;j > i; j--)
 				tempKey[j] = tempKey[j - 1];
 
-			tempKey[i] = x;
+			tempKey[i] = keyToInsert;
 
 			for (int j = MAX + 2;j > i + 1; j--)
 				tempPtr[j] = tempPtr[j - 1];
