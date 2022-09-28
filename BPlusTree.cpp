@@ -155,7 +155,7 @@ public:
 			{
 				for (int i = 0; i < cursor->size + 1; i++)
 				{
-					display(cursor->ptr[i], --level, ++child);
+					Display(cursor->ptr[i], --level, ++child);
 				}
 			}
 		}
