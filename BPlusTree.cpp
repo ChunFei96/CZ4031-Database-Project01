@@ -162,6 +162,146 @@ public:
 	}
 #pragma endregion
 
+#pragma region search main function
+    void retrievedetails(int lowlimit, int highlimit, bufferPool* bufferPool)
+    {
+        bool retrievenode = true;
+        int numOfIndexAccess = 1, numOfBlkAccess = 1, numOfMatch = 0;
+        float totalRating = 0, avgRating = 0;
+        vector <int> tempIndex;
+        vector <string> tempData;
+        vector <uchar*> tempAddress;
+        vector <vector <int>> indexNode;
+        vector <vector <string>> dataBlock;
+ 
+        if (root == NULL)
+        {
+            cout << "Tree is empty." << endl;
+        }
+        else
+        {
+            Node* cursor = root;
+            while (!cursor->IS_LEAF)
+            {
+                for (int i = 0; i < cursor->size; i++)
+                {
+                    for (int j = 0; j < cursor->size; j++)
+                    {
+                        if (indexNode.size() < 5 and retrievenode == true)
+                            tempIndex.push_back(cursor->key[j]);
+                    }
+
+                    if (lowlimit < cursor->key[i])
+                    {
+                        cursor = cursor->ptr[i];
+                        numOfIndexAccess += 1;
+                        break;
+                    }
+                    if (i == cursor->size - 1)
+                    {
+                        cursor = cursor->ptr[i + 1];
+                        numOfIndexAccess += 1;
+                        break;
+                    }
+                    retrievenode = false;
+                }
+                if (indexNode.size() < 5)
+                    indexNode.push_back(tempIndex);
+                tempIndex.clear();
+                retrievenode = true;
+            }
+            while (retrievenode) {
+                for (int i = 0; i < cursor->size; i++)
+                {
+                    if (indexNode.size() < 5)
+                        tempIndex.push_back(cursor->key[i]);
+
+                    if (cursor->key[i] >= lowlimit and cursor->key[i] <= highlimit)
+                    {
+                        tempAddress = getAllLLNode(cursor->llPtr[i], tempAddress);
+                        numOfMatch += cursor->llPtr[i]->size;
+                    }
+                    else if (cursor->key[i] > highlimit)
+                        retrievenode = false;
+
+                    if (i == cursor->size - 1 and retrievenode == true)
+                    {
+                        cursor = cursor->ptr[i + 1];
+                        numOfIndexAccess += 1;
+                        numOfBlkAccess += 1;
+                        break;
+                    }
+                }
+                if (indexNode.size() < 5)
+                    indexNode.push_back(tempIndex);
+                tempIndex.clear();
+            }
+
+            numOfBlkAccess = tempAddress.size();
+            for (uint i = 0; i < numOfBlkAccess; i++)
+            {
+                for (uint j = 20; j <= bufferPool->getBlkSize(); j+=20)
+                {
+                    void* recordAddress = (uchar*)tempAddress[i] + j;
+                    if (dataBlock.size() < 5)
+                        tempData.push_back((*(Record*)recordAddress).tconst);
+                    if ((*(Record*)recordAddress).numVotes >= lowlimit and (*(Record*)recordAddress).numVotes <= highlimit)
+                        totalRating += (*(Record*)recordAddress).avgRating;
+                }
+                if (dataBlock.size() < 5)
+                    dataBlock.push_back(tempData);
+                tempData.clear();
+            }
+
+            cout << "Content of the first 5 Index Nodes =" << endl;
+            for (uint i = 0; i < indexNode.size(); i++)
+            {
+                cout << "| ";
+                for (uint j = 0; j < indexNode[i].size(); j++)
+                    cout << indexNode[i][j] << " ";
+                cout << "| " << endl;
+            }
+            cout << "Number of Index Nodes accessed = " << numOfIndexAccess << endl;
+
+            cout << endl << "Content of the first 5 Data Blocks = " << endl;
+            for (uint i = 0; i < dataBlock.size(); i++)
+            {
+                cout << "| ";
+                for (uint j = 0; j < dataBlock[i].size(); j++)
+                    cout << dataBlock[i][j] << " ";
+                cout << "| " << endl;
+            }
+            cout << "Number of Data Blocks accessed = " << numOfBlkAccess << endl << endl;
+
+            cout << "Total number of matches = " << numOfMatch << endl;
+            if (numOfMatch > 0)
+                cout << "The rating average of 'averageRating' = " << totalRating / numOfMatch << endl;
+            else
+                cout << "No records were found due to 0 match results." << endl;
+        }
+    }
+    vector<uchar*> getAllLLNode(LLNode* list, vector<uchar*>&tempAddress)
+    {
+        LLNode* curr = list;
+        if (list == NULL)
+        {
+            cout << ("List is Empty") << endl;
+            return tempAddress;
+        }
+        while (curr != NULL)
+        {
+            if (find(tempAddress.begin(), tempAddress.end(), curr->location.blockLocation) == tempAddress.end())
+                tempAddress.push_back(curr->location.blockLocation);
+            curr = curr->next;
+        }
+        return tempAddress;
+    }
+    Record getRecords(Location location) {
+        void* mainMemoryAddress = (uchar*)location.blockLocation + location.offset;
+        return (*(Record*)mainMemoryAddress);
+    }
+#pragma endregion
+
 	int getNumOfNode()
 	{
 		return numOfNode;
@@ -400,6 +540,4 @@ private:
 		heightOfTree += 1;
 	}
 #pragma endregion
-
-
 };

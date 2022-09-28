@@ -40,7 +40,7 @@ int main()
                     Location location;
                     string token;
 
-                    strcpy_s(record.tconst, line.substr(0, line.find('\t')).c_str());
+                   strcpy(record.tconst, line.substr(0, line.find('\t')).c_str());
                     stringstream ss(line);
                     getline(ss, token, '\t');
                     ss >> record.avgRating >> record.numVotes;
@@ -77,11 +77,17 @@ int main()
           cout << "Number of Nodes of B+ Tree = " << tree.getNumOfNode() << endl;
           cout << "Height of the B+ Tree = " << tree.getTreeLvl() << endl;
           tree.Display(tree.getRoot(), tree.getNumOfNode(), 0);
+         
+         cout << endl << "------------------------Experiment 3------------------------" << endl << endl;
+         cout << "Searching for 'numVotes' = 500..." << endl << endl;
+         tree.retrievedetails(500, 500, &bufferPool);
+         
+         cout << endl << "------------------------Experiment 4------------------------" << endl << endl;
+         cout << "Searching for 'numVotes' = 30000 to 40000..." << endl << endl;
+         tree.retrievedetails(30000, 40000, &bufferPool);
      }
-
-     return 0;
+         return 0;
 }
-
 // int nthOccurrence(const std::string &str, const std::string &findMe, int nth)
 // {
 //     size_t pos = 0;
