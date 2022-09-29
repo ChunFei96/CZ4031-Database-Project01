@@ -13,14 +13,15 @@ int main()
      const int MEMORY = 300000000; // 300 MB of memory allocated
 
      // To test for 200B & 500B block size scenario
-     uint blockSize[2] = {200, 500};
+     // uint blockSize[2] = {200, 500};
+     uint blockSize[1] = {100};
      for (int i = 0; i < (sizeof(blockSize) / sizeof(int)); i++)
      {
           cout << "<------------------- Data reading for block size  " << blockSize[i] << ".. ------------------->"
                << "\n";
 
           fstream file;
-          file.open("data/data.tsv", ios::in);
+          file.open("data/data_5k.tsv", ios::in);
 
           bufferPool bufferPool{MEMORY, blockSize[i]};
           vector<Location> dataset;
@@ -43,7 +44,7 @@ int main()
                     strcpy(record.tconst, line.substr(0, line.find('\t')).c_str());
                     stringstream ss(line);
                     getline(ss, token, '\t');
-                    ss >> record.avgRating >> record.numVotes;
+                    ss >> record.averageRating >> record.numVotes;
 
                     location = bufferPool.insertRecord(sizeof(record));
                     dataset.push_back(location);
@@ -56,35 +57,48 @@ int main()
           cout << endl
                << "------------------------Experiment 1------------------------" << endl
                << endl;
-          cout << "Number of blocks = " << bufferPool.getNumOfBlkAlloc() << endl;
+          cout << "Number of blocks = " << bufferPool.getNumOfBlockAlloc() << endl;
           cout << "Size of Database = " << double(bufferPool.getTotalRecordSize()) / (1000 * 1000) << "MB" << endl;
 
-          cout << "\n <------------------- Completed reading for block size  " << blockSize[i] << ".. ------------------->"
-               << "\n \n";
+          cout << endl
+               << "------------------------End of Experiment 1------------------------" << endl
+               << endl;
 
           BPlusTree tree;
           bool isTreeEmpty = true;
-          cout << endl << "------------------------Experiment 2------------------------" << endl << endl;
-          for (int i = 0; i < dataset.size(); ++i) {
-              if (i > 0)
-                  isTreeEmpty = false;
+          cout << endl
+               << "------------------------Experiment 2------------------------" << endl
+               << endl;
+          for (int i = 0; i < dataset.size(); ++i)
+          {
+               if (i > 0)
+                    isTreeEmpty = false;
 
-              void* mainMemoryAddress = (uchar*)dataset[i].blockLocation + dataset[i].offset;
-              uint numVotes = (*(Record*)mainMemoryAddress).numVotes;
-              tree.Insert(dataset[i], numVotes, isTreeEmpty);
+               void *mainMemoryAddress = (uchar *)dataset[i].blockLocation + dataset[i].offset;
+               uint numVotes = (*(Record *)mainMemoryAddress).numVotes;
+               tree.Insert(dataset[i], numVotes, isTreeEmpty);
           }
           cout << "Parameter (n) of B+ Tree = " << MAX << endl;
           cout << "Number of Nodes of B+ Tree = " << tree.getNumOfNode() << endl;
           cout << "Height of the B+ Tree = " << tree.getTreeLvl() << endl;
           tree.Display(tree.getRoot(), 1, 0);
-         
-         cout << endl << "------------------------Experiment 3------------------------" << endl << endl;
-         cout << "Searching for 'numVotes' = 500..." << endl << endl;
-         tree.retrievedetails(500, 500, &bufferPool);
-         
-         cout << endl << "------------------------Experiment 4------------------------" << endl << endl;
-         cout << "Searching for 'numVotes' = 30000 to 40000..." << endl << endl;
-         tree.retrievedetails(30000, 40000, &bufferPool);
+
+          cout << endl
+               << "------------------------Experiment 3------------------------" << endl
+               << endl;
+          cout << "Searching for 'numVotes' = 500..." << endl
+               << endl;
+          tree.retrievedetails(500, 500, &bufferPool);
+
+          cout << endl
+               << "------------------------Experiment 4------------------------" << endl
+               << endl;
+          cout << "Searching for 'numVotes' = 30000 to 40000..." << endl
+               << endl;
+          tree.retrievedetails(30000, 40000, &bufferPool);
+
+          cout << "\n <------------------- Completed reading for block size  " << blockSize[i] << ".. ------------------->"
+               << "\n \n";
      }
-         return 0;
+     return 0;
 }

@@ -3,56 +3,49 @@
 
 using namespace std;
 
-bufferPool::bufferPool(uint bufferPoolSize, uint blkSize)
+bufferPool::bufferPool(uint bufferPoolSize, uint blockSize)
 {
     this->bufferPoolSize = bufferPoolSize;
-    this->blkSize = blkSize;
-    this->usedBlkSize = 0;
-    this->currentBlkSizeUsed = 0;
-    this->totalRecordSize = 0;
     uchar *bufferPoolPtr = nullptr;
     this->bufferPoolPtr = new uchar[bufferPoolSize];
-    this->blkPtr = nullptr;
-    this->numBlkAlloc = 0;
-    this->numBlkAvail = bufferPoolSize / blkSize;
+    this->blockSize = blockSize;
+    this->usedBlockSize = 0;
+    this->currentBlockSizeUsed = 0;
+    this->blockPtr = nullptr;
+    this->numBlockAlloc = 0;
+    this->numBlockAvail = bufferPoolSize / blockSize;
+    this->totalRecordSize = 0;
 }
 
 Location bufferPool::insertRecord(uint sizeOfRecord)
 {
-    if (sizeOfRecord > blkSize)
+    if (sizeOfRecord > blockSize)
     {
-        cout << "Unable to allocate space for record as record size is greater than block size.\n";
-        throw "Unable to allocate space for record as record size is greater than block size.\n";
+        cout << "ERROR! - fail to allocate space: size of record is greater than block size.\n";
+        throw "ERROR! - fail to allocate space: size of record is greater than block size.\n";
     }
-    else if (blkSize < (currentBlkSizeUsed + sizeOfRecord) or numBlkAlloc == 0)
+    else if (blockSize < (currentBlockSizeUsed + sizeOfRecord) or numBlockAlloc == 0)
     {
-        if (!isBlockAvailable())
+        if (numBlockAvail > 0)
         {
-            cout << "Unable to allocate space as buffer is full.\n";
-            throw "Unable to allocate space as buffer is full.\n";
+            blockPtr = bufferPoolPtr + (numBlockAlloc * blockSize);
+            usedBlockSize += blockSize;
+            numBlockAlloc += 1;
+            numBlockAvail -= 1;
+            currentBlockSizeUsed = 0; // New block assigned with 0 record inside
+        }
+        else
+        {
+            cout << "ERROR! - fail to allocate space: database is full.\n";
+            throw "ERROR! - fail to allocate space: database is full.\n";
         }
     }
     totalRecordSize += sizeOfRecord;
-    currentBlkSizeUsed += sizeOfRecord;
+    currentBlockSizeUsed += sizeOfRecord;
 
-    Location recordAddress{blkPtr, currentBlkSizeUsed};
+    Location recordAddress{blockPtr, currentBlockSizeUsed};
 
     return recordAddress;
-}
-
-bool bufferPool::isBlockAvailable()
-{
-    if (numBlkAvail > 0)
-    {
-        blkPtr = bufferPoolPtr + (numBlkAlloc * blkSize);
-        usedBlkSize += blkSize;
-        numBlkAlloc += 1;
-        numBlkAvail -= 1;
-        currentBlkSizeUsed = 0; // New block assigned with 0 record inside
-        return true;
-    }
-    else
-        return false;
 }
 
 void bufferPool::deleteRecord(Location location)
@@ -68,38 +61,27 @@ void bufferPool::deleteRecord(Location location)
         fill((uchar *)location.blockLocation + location.offset, (uchar *)location.blockLocation + location.offset + 20, '\0');
 
         // Block is empty, remove size of block.
-        if (blkSize == 100)
-        {
-            uchar cmpBlk[100];
-            fill(cmpBlk, cmpBlk + 20, '\0');
-            result = equal(cmpBlk, cmpBlk + 20, location.blockLocation);
-        }
-        else
-        {
-            uchar cmpBlk[500];
-            fill(cmpBlk, cmpBlk + 20, '\0');
-            result = equal(cmpBlk, cmpBlk + 20, location.blockLocation);
-        }
+        uchar cmpBlk[blockSize];
+        fill(cmpBlk, cmpBlk + 20, '\0');
+        result = equal(cmpBlk, cmpBlk + 20, location.blockLocation);
 
         if (result == true)
         {
-            currentBlkSizeUsed -= blkSize;
-            numBlkAlloc--;
-            numBlkAvail++;
+            currentBlockSizeUsed -= blockSize;
+            numBlockAlloc--;
+            numBlockAvail++;
         }
     }
 
     catch (exception &e)
     {
-        cout << "Exception" << e.what() << "\n";
-        cout << "Delete record or block failed"
-             << "\n";
+        cout << "ERROR! - Exception deleteRecord: " << e.what() << "\n";
     }
 }
 
-uint bufferPool::getBlkSize()
+uint bufferPool::getBlockSize()
 {
-    return blkSize;
+    return blockSize;
 }
 
 uint bufferPool::getTotalRecordSize()
@@ -107,7 +89,7 @@ uint bufferPool::getTotalRecordSize()
     return totalRecordSize;
 }
 
-int bufferPool::getNumOfBlkAlloc()
+int bufferPool::getNumOfBlockAlloc()
 {
-    return numBlkAlloc;
+    return numBlockAlloc;
 }

@@ -11,7 +11,7 @@ struct Record
      * Size of each record = 20 bytes
      */
     char tconst[SIZE];
-    float avgRating;
+    float averageRating;
     uint numVotes;
 };
 
@@ -32,32 +32,28 @@ class bufferPool
 {
 private:
     uint bufferPoolSize;
-    uint blkSize;
-    uint usedBlkSize;
-    uint totalRecordSize;
-    uint currentBlkSizeUsed;
-
     uchar *bufferPoolPtr;
-    uchar *blkPtr;
-
-    int numBlkAlloc;
-    int numBlkAvail;
+    uint blockSize;
+    uint usedBlockSize;
+    uint currentBlockSizeUsed;
+    uchar *blockPtr;
+    int numBlockAlloc;
+    int numBlockAvail;
+    uint totalRecordSize;
 
 public:
-    bufferPool(uint bufferPoolSize, uint blkSize);
+    bufferPool(uint bufferPoolSize, uint blockSize);
 
     //~bufferPool();
 
     Location insertRecord(uint sizeOfRecord);
 
-    bool isBlockAvailable();
-
     void deleteRecord(Location location);
 
-    uint getBlkSize();
+    uint getBlockSize();
 
     uint getTotalRecordSize();
 
-    int getNumOfBlkAlloc();
+    int getNumOfBlockAlloc();
 };
 #endif
