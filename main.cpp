@@ -55,7 +55,7 @@ int main()
           }
 
           cout << endl
-               << "------------------------Experiment 1------------------------" << endl
+               << "---------------------------Experiment 1---------------------------" << endl
                << endl;
           cout << "Number of blocks = " << bufferPool.getNumOfBlockAlloc() << endl;
           cout << "Size of Database = " << double(bufferPool.getTotalRecordSize()) / (1000 * 1000) << "MB" << endl;
@@ -67,7 +67,7 @@ int main()
           BPlusTree tree;
           bool isTreeEmpty = true;
           cout << endl
-               << "------------------------Experiment 2------------------------" << endl
+               << "---------------------------Experiment 2---------------------------"
                << endl;
           for (int i = 0; i < dataset.size(); ++i)
           {
@@ -84,18 +84,30 @@ int main()
           tree.Display(tree.getRoot(), 1, 0);
 
           cout << endl
-               << "------------------------Experiment 3------------------------" << endl
+               << "------------------------End of Experiment 2------------------------"
+               << endl;
+
+          cout << endl
+               << "---------------------------Experiment 3---------------------------" << endl
                << endl;
           cout << "Searching for 'numVotes' = 500..." << endl
                << endl;
           tree.retrievedetails(500, 500, &bufferPool);
 
           cout << endl
-               << "------------------------Experiment 4------------------------" << endl
+               << "------------------------End of Experiment 3------------------------"
+               << endl;
+
+          cout << endl
+               << "---------------------------Experiment 4---------------------------" << endl
                << endl;
           cout << "Searching for 'numVotes' = 30000 to 40000..." << endl
                << endl;
           tree.retrievedetails(30000, 40000, &bufferPool);
+
+          cout << endl
+               << "------------------------End of Experiment 4------------------------"
+               << endl;
 
           cout << "\n <------------------- Completed reading for block size  " << blockSize[i] << ".. ------------------->"
                << "\n \n";
