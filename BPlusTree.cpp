@@ -46,10 +46,7 @@ public:
 		if (isTreeEmpty)
 		{
 			root->key[0] = keyToInsert;
-
-			LLNode* listHead = NULL;
-			AddToEnd(&listHead, location);
-			root->llPtr[0] = listHead;
+			root->llPtr[0] = createLLNode(location);
 		}
 		else
 		{
@@ -87,7 +84,7 @@ public:
 			if (cursor->size < MAX)
 			{
 				//sort(cursor->key, cursor->key + cursor->size);
-				insertKey(cursor->key, cursor->llPtr, cursor->size, keyToInsert, listHead, location, false);
+				insertKey(cursor->key, cursor->llPtr, cursor->size, keyToInsert, location, false);
 				cursor->size++;
 				cursor->ptr[cursor->size] = cursor->ptr[cursor->size - 1];
 				cursor->ptr[cursor->size - 1] = NULL;
@@ -110,7 +107,7 @@ public:
 				/*tempKey[MAX] = keyToInsert;
 				sort(tempKey, tempKey + (MAX + 1));*/
 
-				insertKey(tempKey, tempLLPtrList, cursor->size, keyToInsert, listHead, location, true);
+				insertKey(tempKey, tempLLPtrList, cursor->size, keyToInsert, location, true);
 
 				// step 2: create a new leaf node
 				Node* newLeaf = CreateLeafNode(cursor->ptr[MAX], tempKey, tempLLPtrList);
@@ -230,6 +227,13 @@ private:
 			newInternalNode->IS_LEAF = false;
 			//split cursor into two different nodes
 			cursor->size = (MAX + 1) / 2;
+			// update the current internal node
+			for (int h = 0; h < cursor->size; h++)
+				cursor->key[h] = tempKey[h];
+
+			for (int k = 0; k < cursor->size + 1; k++)
+				cursor->ptr[k] = tempPtr[k];
+
 			newInternalNode->size = MAX - ((MAX + 1) / 2);
 			//give elements and pointers to the new node
 			for (i = 0, j = cursor->size + 1; i < newInternalNode->size; i++, j++)
@@ -254,72 +258,27 @@ private:
 			else
 			{
 				//find depth first search to find parent of cursor recursively
-				insertInternal(cursor->key[cursor->size], findParent(root, cursor), newInternalNode);
+				insertInternal(findLowestBoundLeafNode(newInternalNode)->key[0], findParent(root, cursor), newInternalNode);
 			}
 		}
 	}
 
-	Node* findParent(Node* cursor, Node* child)
+	LLNode* createLLNode(Location location)
 	{
-		//finds parent using depth first traversal and ignores leaf nodes as they cannot be parents
-		//also ignores second last level because we will never find parent of a leaf node during insertion using this function
-		Node* parent = NULL;
-		if (cursor->IS_LEAF || (cursor->ptr[0])->IS_LEAF)
-		{
-			return NULL;
-		}
-		for (int i = 0; i < cursor->size + 1; i++)
-		{
-			if (cursor->ptr[i] == child)
-			{
-				parent = cursor;
-				return parent;
-			}
-			else
-			{
-				parent = findParent(cursor->ptr[i], child);
-				if (parent != NULL)return parent;
-			}
-		}
-		return parent;
+		LLNode* newLLNode = new LLNode;
+
+		newLLNode->location = location;
+		newLLNode->size = 1;
+		newLLNode->next = NULL;
+
+		return newLLNode;
 	}
 
 	void AddToEnd(struct LLNode** ppList, Location location)
 	{
-		/* Temp pointer to store new node */
-		struct LLNode* newNode = NULL;
-		/* Serves as our runner to find the last node */
-		struct LLNode* curr = NULL;
-
-		/* Check ppList is valid */
-		if (ppList == NULL)
-		{
-			cout << "PPList is null." << endl;
-			/* Invalid, return don't do anything */
-			return;
-		}
-
-		/* Allocate the Node memory via malloc */
-		//newNode = (struct Node*)malloc(sizeof(struct Node));
-		newNode = new LLNode;
-		/* Failed allocation, can't do anything else */
-		if (newNode == NULL)
-			return;
-
-		/* Assign the values to the new Node */
-		newNode->location = location;
-		newNode->next = NULL;
-
-		/* Find the location to add */
-		/* Special case : Head is empty! */
-		if (*ppList == NULL)/* *ppList is ListHead*/
-		{
-			newNode->size = 1;
-			*ppList = newNode;
-			return;
-		}
-
 		/* There are already nodes in the list, need to find the last spot */
+		struct LLNode* newNode = new LLNode;
+		struct LLNode* curr = NULL;
 		curr = *ppList;
 		curr->size += 1;
 		int tempSize = curr->size;
@@ -342,7 +301,7 @@ private:
 		heightOfTree = 1;
 	}
 
-	void insertKey(int* nodeKeys, LLNode** llNode, int size, int keyToInsert, LLNode* listHead, Location location, bool isOverflow) {
+	void insertKey(int* nodeKeys, LLNode** llNode, int size, int keyToInsert,Location location, bool isOverflow) {
 		int i = 0;
 		while (keyToInsert > nodeKeys[i] && i < size) i++;
 
@@ -354,8 +313,7 @@ private:
 			llNode[j] = llNode[j - 1];
 		}
 		nodeKeys[i] = keyToInsert;
-		AddToEnd(&listHead, location);
-		llNode[i] = listHead;
+		llNode[i] = createLLNode(location);
 	}
 
 	Node* CreateLeafNode(Node* nextNode, int* tempKeys, LLNode** tempLLPtrList)
@@ -398,6 +356,44 @@ private:
 		root = parentRoot;
 		numOfNode += 1;
 		heightOfTree += 1;
+	}
+
+	Node* findLowestBoundLeafNode(Node* cursor)
+	{
+		Node* lowestBoundLeafNode = NULL;
+		while (!cursor->IS_LEAF)
+		{
+			cursor = cursor->ptr[0];
+		}
+		lowestBoundLeafNode = cursor;
+		return lowestBoundLeafNode;
+	}
+#pragma endregion
+
+#pragma region Common functions
+	Node* findParent(Node* cursor, Node* child)
+	{
+		//finds parent using depth first traversal and ignores leaf nodes as they cannot be parents
+		//also ignores second last level because we will never find parent of a leaf node during insertion using this function
+		Node* parent = NULL;
+		if (cursor->IS_LEAF || (cursor->ptr[0])->IS_LEAF)
+		{
+			return NULL;
+		}
+		for (int i = 0; i < cursor->size + 1; i++)
+		{
+			if (cursor->ptr[i] == child)
+			{
+				parent = cursor;
+				return parent;
+			}
+			else
+			{
+				parent = findParent(cursor->ptr[i], child);
+				if (parent != NULL)return parent;
+			}
+		}
+		return parent;
 	}
 #pragma endregion
 
