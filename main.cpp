@@ -20,7 +20,7 @@ int main()
                << "\n";
 
           fstream file;
-          file.open("data/data_12.tsv", ios::in);
+          file.open("data/data.tsv", ios::in);
 
           bufferPool bufferPool{MEMORY, blockSize[i]};
           vector<Location> dataset;
@@ -40,7 +40,7 @@ int main()
                     Location location;
                     string token;
 
-                   strcpy(record.tconst, line.substr(0, line.find('\t')).c_str());
+                    strcpy(record.tconst, line.substr(0, line.find('\t')).c_str());
                     stringstream ss(line);
                     getline(ss, token, '\t');
                     ss >> record.avgRating >> record.numVotes;
@@ -76,7 +76,7 @@ int main()
           cout << "Parameter (n) of B+ Tree = " << MAX << endl;
           cout << "Number of Nodes of B+ Tree = " << tree.getNumOfNode() << endl;
           cout << "Height of the B+ Tree = " << tree.getTreeLvl() << endl;
-          tree.Display(tree.getRoot(), tree.getNumOfNode(), 0);
+          tree.Display(tree.getRoot(), 1, 0);
          
          cout << endl << "------------------------Experiment 3------------------------" << endl << endl;
          cout << "Searching for 'numVotes' = 500..." << endl << endl;
@@ -88,18 +88,3 @@ int main()
      }
          return 0;
 }
-// int nthOccurrence(const std::string &str, const std::string &findMe, int nth)
-// {
-//     size_t pos = 0;
-//     int cnt = 0;
-
-//     while (cnt != nth)
-//     {
-//         pos += 1;
-//         pos = str.find(findMe, pos);
-//         if (pos == std::string::npos)
-//             return -1;
-//         cnt++;
-//     }
-//     return pos;
-// }

@@ -52,8 +52,8 @@ public:
 		{
 			Node* cursor = root;
 			Node* parent = NULL;
-			LLNode* listHead = NULL;
 
+			// step1: travel to the leaf node while keep track the parent node
 			while (!cursor->IS_LEAF)
 			{
 				parent = cursor;
@@ -71,17 +71,16 @@ public:
 					}
 				}
 			}
-			for (int i = 0; i < cursor->size;i++)
-			{
-				if (keyToInsert == cursor->key[i])
-				{
-					AddToEnd(&cursor->llPtr[i], location);
-					return;
-				}
-			}
 
-			//now cursor is the leaf node in which we'll insert the new key
-			if (cursor->size < MAX)
+			// the cursor reached the leaf nodes level
+			
+			// step2: first check if the key already exist, append the key to the linked list 
+			int dupKeyIndex = isDuplicateKeyFound(cursor, keyToInsert);
+			if (dupKeyIndex > -1) {
+				updateLLNode(&cursor->llPtr[dupKeyIndex], location);
+			}
+			// step3.1: check if the leaf node is not full, add the key into the leaf node in order
+			else if (cursor->size < MAX)
 			{
 				//sort(cursor->key, cursor->key + cursor->size);
 				insertKey(cursor->key, cursor->llPtr, cursor->size, keyToInsert, location, false);
@@ -89,11 +88,12 @@ public:
 				cursor->ptr[cursor->size] = cursor->ptr[cursor->size - 1];
 				cursor->ptr[cursor->size - 1] = NULL;
 			}
+			// step3.2: else split the leaf node into 2 leaf nodes
 			else
 			{
 				// Overflow scenario
 
-				// step 1: create a MAX + 1 sorted array for overflow scenario
+				// step3.2.1: create a MAX + 1 sorted array for overflow scenario
 				int tempKey[MAX + 1];
 				LLNode* tempLLPtrList[MAX + 1];
 				numOfNode += 1;
@@ -104,18 +104,15 @@ public:
 					tempLLPtrList[i] = cursor->llPtr[i];
 				}
 
-				/*tempKey[MAX] = keyToInsert;
-				sort(tempKey, tempKey + (MAX + 1));*/
-
 				insertKey(tempKey, tempLLPtrList, cursor->size, keyToInsert, location, true);
 
-				// step 2: create a new leaf node
+				// step3.2.2: create a new leaf node
 				Node* newLeaf = CreateLeafNode(cursor->ptr[MAX], tempKey, tempLLPtrList);
 
-				// step 3: reconstruct the current node
+				// step3.2.3: reconstruct the current node
 				ReconstructCurrentNode(cursor, newLeaf, tempKey, tempLLPtrList);
 
-				// step 4: update the parent nodes
+				// step3.2.4: update the parent nodes
 				if (cursor == root)
 				{
 					//if cursor is a root node, we create a new parent root
@@ -126,7 +123,7 @@ public:
 				else
 				{
 					//insert new key in parent node
-					insertInternal(newLeaf->key[0], parent, newLeaf);
+					InsertParent(parent, newLeaf);
 				}
 			}
 		}
@@ -322,8 +319,11 @@ public:
 private:
 
 #pragma region Insert sub functions
-	void insertInternal(int keyToInsert, Node* cursor, Node* child)
+	void InsertParent(Node* cursor, Node* child)
 	{
+		Node* lowestBoundLeafNode = findLowestBoundLeafNode(child);
+		int keyToInsert = lowestBoundLeafNode->key[0];
+
 		if (cursor->size < MAX)
 		{
 			//cursor not full, find position to insert new key
@@ -383,22 +383,14 @@ private:
 
 			if (cursor == root)
 			{
-				//if cursor is a root node, create new root
-				Node* newRoot = new Node;
-				newRoot->key[0] = cursor->key[cursor->size];
-				newRoot->ptr[0] = cursor;
-				newRoot->ptr[1] = newInternalNode;
-				newRoot->IS_LEAF = false;
-				newRoot->size = 1;
-				root = newRoot;
-				//increase number of node and tree level by 1
-				numOfNode += 1;
-				heightOfTree += 1;
+				//if cursor is a root node, create new parent root
+				Node* parentRoot = new Node;
+				CreateParentNode(parentRoot, cursor, newInternalNode);
 			}
 			else
 			{
 				//find depth first search to find parent of cursor recursively
-				insertInternal(findLowestBoundLeafNode(newInternalNode)->key[0], findParent(root, cursor), newInternalNode);
+				InsertParent(findParent(root, cursor), newInternalNode);
 			}
 		}
 	}
@@ -414,23 +406,22 @@ private:
 		return newLLNode;
 	}
 
-	void AddToEnd(struct LLNode** ppList, Location location)
+	void updateLLNode(struct LLNode** llNode, Location location)
 	{
-		/* There are already nodes in the list, need to find the last spot */
-		struct LLNode* newNode = new LLNode;
-		struct LLNode* curr = NULL;
-		curr = *ppList;
-		curr->size += 1;
-		int tempSize = curr->size;
-		while (curr->next != NULL)
+		struct LLNode* dupKeyNode = new LLNode;
+		dupKeyNode->location = location;
+		dupKeyNode->next = NULL;
+
+		// step1: find the last node of the linked list
+		while ((*llNode)->next != NULL)
 		{
-			/* Keep advancing the runner while the next is not empty */
-			curr->size = tempSize;
-			curr = curr->next;
+			(*llNode) = (*llNode)->next;
 		}
-		/* Here, we have curr at the last position, append the new node */
-		curr->next = newNode;
-		newNode->size = tempSize;
+
+		// step2: append the new node to the last node
+		(*llNode)->size += 1;
+		(*llNode)->next = dupKeyNode;
+		dupKeyNode->size = (*llNode)->size;
 	}
 
 	void CreateRootNode(Node* &root) {
@@ -487,7 +478,8 @@ private:
 	}
 
 	void CreateParentNode(Node* parentRoot, Node* firstLeafNode, Node* secondLeafNode) {
-		parentRoot->key[0] = secondLeafNode->key[0];
+		Node* lowestBoundLeafNode = findLowestBoundLeafNode(secondLeafNode);
+		parentRoot->key[0] = lowestBoundLeafNode->key[0];
 		parentRoot->ptr[0] = firstLeafNode;
 		parentRoot->ptr[1] = secondLeafNode;
 		parentRoot->IS_LEAF = false;
@@ -507,6 +499,15 @@ private:
 		}
 		lowestBoundLeafNode = cursor;
 		return lowestBoundLeafNode;
+	}
+
+	int isDuplicateKeyFound(Node* leafNode, int keyToInsert) {
+		for (int i = 0; i < leafNode->size;i++)
+		{
+			if (keyToInsert == leafNode->key[i])
+				return i;
+		}
+		return -1;
 	}
 #pragma endregion
 

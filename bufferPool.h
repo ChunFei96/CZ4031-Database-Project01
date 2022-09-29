@@ -3,12 +3,12 @@
 
 typedef unsigned int uint;
 typedef unsigned char uchar;
-const int SIZE = 10;
+const int SIZE = 11;
 
 struct Record
 {
     /*
-     * Size of each record = 18 bytes
+     * Size of each record = 20 bytes
      */
     char tconst[SIZE];
     float avgRating;
