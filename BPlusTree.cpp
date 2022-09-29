@@ -56,19 +56,23 @@ public:
 			// step1: travel to the leaf node while keep track the parent node
 			while (!cursor->IS_LEAF)
 			{
+				bool isFound = false;
 				parent = cursor;
-				for (int i = 0; i < parent->size; i++)
+
+				// step1.1: go to the child node if the keyToInsert is smaller than the parent key
+				for (int i = 0; i < cursor->size; i++)
 				{
-					if (keyToInsert < parent->key[i])
+					if (keyToInsert < cursor->key[i])
 					{
-						cursor = parent->ptr[i];
+						cursor = cursor->ptr[i];
+						isFound = true;
 						break;
 					}
-					if (i == parent->size - 1)
-					{
-						cursor = parent->ptr[i + 1];
-						break;
-					}
+				}
+
+				// step1.2: else go to the last child node of this parent node
+				if (!isFound) {
+					cursor = cursor->ptr[cursor->size];
 				}
 			}
 
@@ -94,23 +98,23 @@ public:
 				// Overflow scenario
 
 				// step3.2.1: create a MAX + 1 sorted array for overflow scenario
-				int tempKey[MAX + 1];
-				LLNode* tempLLPtrList[MAX + 1];
+				int overflowArrKey[MAX + 1];
+				LLNode* overflowArrLLNode[MAX + 1];
 				numOfNode += 1;
 
 				for (int i = 0; i < MAX; i++)
 				{
-					tempKey[i] = cursor->key[i];
-					tempLLPtrList[i] = cursor->llPtr[i];
+					overflowArrKey[i] = cursor->key[i];
+					overflowArrLLNode[i] = cursor->llPtr[i];
 				}
 
-				insertKey(tempKey, tempLLPtrList, cursor->size, keyToInsert, location, true);
+				insertKey(overflowArrKey, overflowArrLLNode, cursor->size, keyToInsert, location, true);
 
 				// step3.2.2: create a new leaf node
-				Node* newLeaf = CreateLeafNode(cursor->ptr[MAX], tempKey, tempLLPtrList);
+				Node* newLeaf = CreateLeafNode(cursor->ptr[MAX], overflowArrKey, overflowArrLLNode);
 
 				// step3.2.3: reconstruct the current node
-				ReconstructCurrentNode(cursor, newLeaf, tempKey, tempLLPtrList);
+				ReconstructCurrentNode(cursor, newLeaf, overflowArrKey, overflowArrLLNode);
 
 				// step3.2.4: update the parent nodes
 				if (cursor == root)
@@ -447,7 +451,7 @@ private:
 		llNode[i] = createLLNode(location);
 	}
 
-	Node* CreateLeafNode(Node* nextNode, int* tempKeys, LLNode** tempLLPtrList)
+	Node* CreateLeafNode(Node* nextNode, int* overflowArrKey, LLNode** overflowArrLLNode)
 	{
 		Node* leafNode = new Node();
 		leafNode->IS_LEAF = true;
@@ -457,13 +461,13 @@ private:
 		// insert key into the new leaf node
 		for (int i = 0,  j = ceil((MAX + 1) / 2); i < leafNode->size; i++, j++)
 		{
-			leafNode->key[i] = tempKeys[j];
-			leafNode->llPtr[i] = tempLLPtrList[j];
+			leafNode->key[i] = overflowArrKey[j];
+			leafNode->llPtr[i] = overflowArrLLNode[j];
 		}
 		return leafNode;
 	}
 
-	void ReconstructCurrentNode(Node* currentNode, Node* newLeafNode, int* tempKeys, LLNode** tempLLPtrList)
+	void ReconstructCurrentNode(Node* currentNode, Node* newLeafNode, int* overflowArrKey, LLNode** overflowArrLLNode)
 	{
 		currentNode->size = ceil((MAX + 1) / 2);
 		currentNode->ptr[currentNode->size] = newLeafNode;
@@ -472,8 +476,8 @@ private:
 		// insert key into the current node
 		for (int i = 0; i < ceil((MAX + 1) / 2); i++)
 		{
-			currentNode->key[i] = tempKeys[i];
-			currentNode->llPtr[i] = tempLLPtrList[i];
+			currentNode->key[i] = overflowArrKey[i];
+			currentNode->llPtr[i] = overflowArrLLNode[i];
 		}
 	}
 
