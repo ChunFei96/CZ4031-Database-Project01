@@ -508,14 +508,14 @@ private:
 
 		if (cursor->size < MAX)
 		{
-			// cursor not full, find position to insert new key
+			// cursor is not full, find the position to insert the new key
 			int i = 0;
 			while (keyToInsert > cursor->key[i] && i < cursor->size)
 				i++;
-			// make space for new key
+			// make space for the new key
 			for (int j = cursor->size; j > i; j--)
 				cursor->key[j] = cursor->key[j - 1];
-			// make space for new pointer
+			// make space for the new pointer
 			for (int j = cursor->size + 1; j > i + 1; j--)
 				cursor->ptr[j] = cursor->ptr[j - 1];
 			cursor->key[i] = keyToInsert;
@@ -529,7 +529,7 @@ private:
 			// create virtual internal node to store the key
 			int tempKey[MAX + 1];
 			Node *tempPtr[MAX + 2];
-			// increase number of node by 1
+			// increase the number of node by 1
 			numOfNode += 1;
 			for (int i = 0; i < MAX; i++)
 				tempKey[i] = cursor->key[i];
@@ -538,7 +538,7 @@ private:
 			int i = 0, j;
 			while (keyToInsert > tempKey[i] && i < MAX)
 				i++;
-			// make space for new key
+			// make space for the new key
 			for (int j = MAX + 1; j > i; j--)
 				tempKey[j] = tempKey[j - 1];
 
@@ -549,7 +549,7 @@ private:
 
 			tempPtr[i + 1] = child;
 			newInternalNode->IS_LEAF = false;
-			// split cursor into two different nodes
+			// split the cursor into two different nodes
 			cursor->size = (MAX + 1) / 2;
 			// update the current internal node
 			for (int h = 0; h < cursor->size; h++)
@@ -567,13 +567,13 @@ private:
 
 			if (cursor == root)
 			{
-				// if cursor is a root node, create new parent root
+				// if the cursor is a root node, create new parent root
 				Node *parentRoot = new Node;
 				CreateParentNode(parentRoot, cursor, newInternalNode);
 			}
 			else
 			{
-				// find depth first search to find parent of cursor recursively
+				// use depth first search to find the parent of the cursor recursively
 				InsertParent(findParent(root, cursor), newInternalNode);
 			}
 		}
