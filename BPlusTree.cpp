@@ -315,7 +315,7 @@ public:
 				if (cursor->key[pos] == x)
 				{
 					found = true;
-					freeList(&cursor->llPtr[pos], bufferPool);
+					deleteLLNode(&cursor->llPtr[pos], bufferPool);
 					break;
 				}
 			}
@@ -358,8 +358,6 @@ public:
 			{
 				isUnderFlow = true;
 			}
-
-			
 
 			cursor->ptr[cursor->size] = cursor->ptr[cursor->size + 1];
 			cursor->ptr[cursor->size + 1] = NULL;
@@ -1029,7 +1027,7 @@ private:
 		}
 	}
 
-	void freeList(LLNode **pList, bufferPool *bufferPool)
+	void deleteLLNode(LLNode **pList, bufferPool *bufferPool)
 	{
 		LLNode *temp = NULL;
 		if (pList == NULL)
