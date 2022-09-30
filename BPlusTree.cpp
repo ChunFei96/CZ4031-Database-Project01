@@ -261,43 +261,55 @@ public:
 #pragma endregion
 
 #pragma region Delete main function
-	void remove(int x, bufferPool *bufferPool)
+	void RmoveEvent(int x, bufferPool* bufferPool)
+
 	{
-		// delete logic
+		//delete logic
 		if (root == NULL)
+
 		{
-			cout << "Tree empty\n";
+			cout << "Tree is Empty!!\n";
 		}
+
 		else
+
 		{
-			Node *cursor = root;
-			Node *parent = NULL;
-			int leftSibling, rightSibling;
-			// cursor will traverse to the leaf node possibly consisting the key
+			Node* cursor = root;
+			Node* parent = NULL;
+			int leftChildren, rightChildern;
+			bool isUnderFlow = false;
+
+			//cursor will traverse to the leaf node possibly consisting the key
 			while (!cursor->IS_LEAF)
 			{
+				bool isFound = false;
+				parent = cursor;
 				for (int i = 0; i < cursor->size; i++)
 				{
-					parent = cursor;
-					leftSibling = i - 1;  // leftSibling is the index of left sibling in the parent node
-					rightSibling = i + 1; // rightSibling is the index of right sibling in the parent node
+					leftChildren = i - 1; 
+					rightChildern = i + 1; 
+
 					if (x < cursor->key[i])
 					{
 						cursor = cursor->ptr[i];
+						isFound = true;
 						break;
-					}
-					if (i == cursor->size - 1)
-					{
-						leftSibling = i;
-						rightSibling = i + 2;
-						cursor = cursor->ptr[i + 1];
-						break;
+
 					}
 				}
+				if (!isFound) {
+					leftChildren = cursor->size - 1;
+					rightChildern = cursor->size - 1 + 2;
+
+					cursor = cursor->ptr[cursor->size - 1 + 1];
+				}
+
 			}
-			// search for the key if it exists and remove the linked list
+
+			//search for the key if it exists and remove the linked list
 			bool found = false;
 			int pos;
+
 			for (pos = 0; pos < cursor->size; pos++)
 			{
 				if (cursor->key[pos] == x)
@@ -307,146 +319,283 @@ public:
 					break;
 				}
 			}
-			if (!found) // if key does not exist in that leaf node
+
+			if (!found)//if key does not exist in that leaf node
 			{
 				cout << "Key is node found in B+ tree." << endl;
 				return;
 			}
-			// deleting the key
-			for (int i = pos; i < cursor->size; i++)
-			{
-				cursor->key[i] = cursor->key[i + 1];
-				cursor->llPtr[i] = cursor->llPtr[i + 1];
-			}
-			cursor->size--;
-			if (cursor == root) // if it is root node, then make all pointers NULL
+
+			if (cursor == root)//if it is root node, then make all pointers NULL
 			{
 				heightOfTree -= 1;
 				for (int i = 0; i < MAX + 1; i++)
 				{
 					cursor->ptr[i] = NULL;
 				}
-				if (cursor->size == 0) // if all keys are deleted
+
+				if (cursor->size == 0)//if all keys are deleted
 				{
-					delete[] cursor->key;
-					delete[] cursor->llPtr;
-					delete[] cursor->ptr;
-					delete cursor;
+					deleteNode(cursor);
+
 					root = NULL;
 				}
 				return;
+
 			}
+
+			//deleting the key
+			for (int i = pos; i < cursor->size; i++)
+			{
+				cursor->key[i] = cursor->key[i + 1];
+				cursor->llPtr[i] = cursor->llPtr[i + 1];
+			}
+
+			cursor->size--;
+
+			//underflow
+			if (cursor->size < floor((MAX + 1) / 2))
+			{
+				isUnderFlow = true;
+			}
+
+			
+
 			cursor->ptr[cursor->size] = cursor->ptr[cursor->size + 1];
 			cursor->ptr[cursor->size + 1] = NULL;
-			if (cursor->size >= (MAX + 1) / 2) // no underflow
+
+			if (isUnderFlow)
 			{
-				return;
-			}
-			// underflow condition
-			// first we try to transfer a key from sibling node
-			// check if left sibling exists
-			if (leftSibling >= 0)
-			{
-				Node *leftNode = parent->ptr[leftSibling];
-				// check if it is possible to transfer
-				if (leftNode->size >= (MAX + 1) / 2 + 1)
-				{
-					// make space for transfer
-					for (int i = cursor->size; i > 0; i--)
-					{
-						cursor->key[i] = cursor->key[i - 1];
-						cursor->llPtr[i] = cursor->llPtr[i - 1];
-						// cursor->address[i] = cursor->address[i - 1];
+#pragma region MY CODE 
+				// if the node keys is less than minimum, check if sibling able to borrow key
+				bool isCanBorrowSiblingKey = canBorrowSiblingKey(parent, leftChildren, rightChildern);
+
+				if (isCanBorrowSiblingKey) {
+					bool isLeftSibling = true;
+					Node* siblingNode = NULL;
+					isLeftSibling = isLeftSiblingNode(&siblingNode, parent, leftChildren, rightChildern);
+
+					if (isLeftSibling) {
+						borrowSiblingKey(cursor, siblingNode, true);
+
+						shiftPointer(cursor);
+
+						shiftPointerSibling(siblingNode, cursor);
+
+						parent->key[leftChildren] = cursor->key[0];
+						parent->llPtr[leftChildren] = cursor->llPtr[0];
 					}
-					// shift pointer to next leaf
-					cursor->size++;
-					cursor->ptr[cursor->size] = cursor->ptr[cursor->size - 1];
-					cursor->ptr[cursor->size - 1] = NULL;
-					// transfer
-					cursor->key[0] = leftNode->key[leftNode->size - 1];
-					cursor->llPtr[0] = leftNode->llPtr[leftNode->size - 1];
-					// shift pointer of leftsibling
-					leftNode->size--;
-					leftNode->ptr[leftNode->size] = cursor;
-					leftNode->ptr[leftNode->size + 1] = NULL;
-					// update parent
-					parent->key[leftSibling] = cursor->key[0];
-					parent->llPtr[leftSibling] = cursor->llPtr[0];
-					return;
-				}
-			}
-			if (rightSibling <= parent->size) // check if right sibling exist
-			{
-				Node *rightNode = parent->ptr[rightSibling];
-				// check if it is possible to transfer
-				if (rightNode->size >= (MAX + 1) / 2 + 1)
-				{
-					// shift pointer to next leaf
-					cursor->size++;
-					cursor->ptr[cursor->size] = cursor->ptr[cursor->size - 1];
-					cursor->ptr[cursor->size - 1] = NULL;
-					// transfer
-					cursor->key[cursor->size - 1] = rightNode->key[0];
-					cursor->llPtr[cursor->size - 1] = rightNode->llPtr[0];
-					// shift pointer of rightsibling
-					rightNode->size--;
-					rightNode->ptr[rightNode->size] = rightNode->ptr[rightNode->size + 1];
-					rightNode->ptr[rightNode->size + 1] = NULL;
-					// shift conent of right sibling
-					for (int i = 0; i < rightNode->size; i++)
-					{
-						rightNode->key[i] = rightNode->key[i + 1];
-						rightNode->llPtr[i] = rightNode->llPtr[i + 1];
+					else {
+						borrowSiblingKey(cursor, siblingNode, false);
+
+						shiftPointer(cursor);
+
+						shiftPointerSibling(siblingNode, siblingNode->ptr[siblingNode->size + 1]);
+
+						parent->key[rightChildern - 1] = siblingNode->key[0];
+						parent->llPtr[rightChildern - 1] = siblingNode->llPtr[0];
 					}
-					// update parent
-					parent->key[rightSibling - 1] = rightNode->key[0];
-					parent->llPtr[rightSibling - 1] = rightNode->llPtr[0];
-					return;
 				}
-			}
-			// merge and delete the node
-			if (leftSibling >= 0) // if left sibling exist
-			{
-				Node *leftNode = parent->ptr[leftSibling];
-				// transfer all keys to leftsibling and then transfer pointer to next leaf node
-				for (int i = leftNode->size, j = 0; j < cursor->size; i++, j++)
-				{
-					leftNode->key[i] = cursor->key[j];
-					leftNode->llPtr[i] = cursor->llPtr[j];
+				else {
+					// else we will need to merge with sibling node and delete the node
+
+					if (leftChildren >= 0) {
+						Node* leftNode = parent->ptr[leftChildren];
+
+						// merge the current node keys to left sibling node
+						for (int i = leftNode->size, j = 0; j < cursor->size; i++, j++)
+						{
+
+							leftNode->key[i] = cursor->key[j];
+							leftNode->llPtr[i] = cursor->llPtr[j];
+
+							// increase the size of the left sibling node
+							leftNode->size += 1;
+						}
+
+						// update the pointer
+						leftNode->ptr[leftNode->size] = cursor->ptr[cursor->size];
+
+						removeInternal(parent->key[leftChildren], parent, cursor);
+
+						deleteNode(cursor);
+					}
+					else if (rightChildern <= parent->size) {
+						Node* rightNode = parent->ptr[rightChildern];
+
+						// merge the current node keys to left sibling node
+						for (int i = cursor->size, j = 0; j < rightNode->size; i++, j++)
+						{
+							cursor->key[i] = rightNode->key[j];
+							cursor->llPtr[i] = rightNode->llPtr[j];
+
+							// increase the size of the current node
+							cursor->size += 1;
+						}
+
+						// update the pointer
+						cursor->ptr[cursor->size] = rightNode->ptr[rightNode->size];
+
+						removeInternal(parent->key[rightChildern - 1], parent, rightNode);
+
+						deleteNode(rightNode);
+					}
+
+					// update the total nodes
+					numOfNode -= 1;
+					numOfNodeDel += 1;
 				}
-				// leftNode->ptr[leftNode->size] = NULL;
-				leftNode->size += cursor->size;
-				leftNode->ptr[leftNode->size] = cursor->ptr[cursor->size];
-				removeInternal(parent->key[leftSibling], parent, cursor); // delete parent node key
-				delete[] cursor->key;
-				delete[] cursor->ptr;
-				delete[] cursor->location;
-				delete cursor;
-				numOfNode -= 1;
-				numOfNodeDel += 1;
+#pragma endregion
+//
+//#pragma region Borrow key from sibling OLD
+//				//underflow condition
+//				//first we try to transfer a key from sibling node
+//				//check if left sibling exists
+//				if (leftChildren >= 0)
+//				{
+//					Node* leftNode = parent->ptr[leftChildren];
+//					//check if it is possible to transfer
+//
+//					if (leftNode->size >= (MAX + 1) / 2 + 1)
+//					{
+//						//make space for transfer
+//						for (int i = cursor->size; i > 0; i--)
+//						{
+//							cursor->key[i] = cursor->key[i - 1];
+//							cursor->llPtr[i] = cursor->llPtr[i - 1];
+//
+//						}
+//						//transfer
+//						cursor->key[0] = leftNode->key[leftNode->size - 1];
+//						cursor->llPtr[0] = leftNode->llPtr[leftNode->size - 1];
+//
+//						//shift pointer to next leaf
+//						cursor->size++;
+//						cursor->ptr[cursor->size] = cursor->ptr[cursor->size - 1];
+//						cursor->ptr[cursor->size - 1] = NULL;
+//
+//						shiftPointer(cursor);
+//
+//						//shift pointer of leftsibling
+//						leftNode->size--;
+//						leftNode->ptr[leftNode->size] = cursor;
+//						leftNode->ptr[leftNode->size + 1] = NULL;
+//
+//						shiftPointerSibling(leftNode, cursor);
+//						//update parent
+//						parent->key[leftChildren] = cursor->key[0];
+//						parent->llPtr[leftChildren] = cursor->llPtr[0];
+//
+//						return;
+//
+//					}
+//
+//				}
+//
+//				if (rightChildern <= parent->size)//check if right sibling exist
+//				{
+//					Node* rightNode = parent->ptr[rightChildern];
+//
+//					//check if it is possible to transfer
+//					if (rightNode->size >= (MAX + 1) / 2 + 1)
+//					{
+//						//transfer
+//						cursor->key[cursor->size - 1] = rightNode->key[0];
+//						cursor->llPtr[cursor->size - 1] = rightNode->llPtr[0];
+//
+//						//shift pointer to next leaf
+//						cursor->size++;
+//						cursor->ptr[cursor->size] = cursor->ptr[cursor->size - 1];
+//						cursor->ptr[cursor->size - 1] = NULL;
+//
+//						//shift pointer of rightsibling
+//						rightNode->size--;
+//						rightNode->ptr[rightNode->size] = rightNode->ptr[rightNode->size + 1];
+//						rightNode->ptr[rightNode->size + 1] = NULL;
+//
+//						//shift conent of right sibling
+//						for (int i = 0; i < rightNode->size; i++)
+//						{
+//							rightNode->key[i] = rightNode->key[i + 1];
+//							rightNode->llPtr[i] = rightNode->llPtr[i + 1];
+//						}
+//
+//						//update parent
+//						parent->key[rightChildern - 1] = rightNode->key[0];
+//						parent->llPtr[rightChildern - 1] = rightNode->llPtr[0];
+//
+//						return;
+//
+//					}
+//
+//				}
+//#pragma endregion
+//
+//
+//#pragma region Merge and delete the node OLD
+//				//merge and delete the node
+//
+//				if (leftChildren >= 0)//if left sibling exist
+//				{
+//					Node* leftNode = parent->ptr[leftChildren];
+//
+//					// transfer all keys to leftsibling and then transfer pointer to next leaf node
+//					for (int i = leftNode->size, j = 0; j < cursor->size; i++, j++)
+//					{
+//						leftNode->key[i] = cursor->key[j];
+//						leftNode->llPtr[i] = cursor->llPtr[j];
+//					}
+//
+//					//leftNode->ptr[leftNode->size] = NULL;
+//					leftNode->size += cursor->size;
+//					leftNode->ptr[leftNode->size] = cursor->ptr[cursor->size];
+//					removeInternal(parent->key[leftChildren], parent, cursor);// delete parent node key
+//
+//					//delete[] cursor->key;
+//					//delete[] cursor->ptr;
+//					//delete[] cursor->location;
+//					//delete cursor;
+//					deleteNode(cursor);
+//
+//					numOfNode -= 1;
+//					numOfNodeDel += 1;
+//				}
+//
+//				else if (rightChildern <= parent->size)//if right sibling exist
+//
+//				{
+//
+//					Node* rightNode = parent->ptr[rightChildern];
+//
+//					// transfer all keys to cursor and then transfer pointer to next leaf node
+//					for (int i = cursor->size, j = 0; j < rightNode->size; i++, j++)
+//					{
+//						cursor->key[i] = rightNode->key[j];
+//						cursor->llPtr[i] = rightNode->llPtr[j];
+//					}
+//
+//					//cursor->ptr[cursor->size] = NULL;
+//					cursor->size += rightNode->size;
+//					cursor->ptr[cursor->size] = rightNode->ptr[rightNode->size];
+//					removeInternal(parent->key[rightChildern - 1], parent, rightNode);// delete parent node key
+//
+//					/*delete[] rightNode->key;
+//					delete[] rightNode->ptr;
+//					delete[] rightNode->location;
+//					delete rightNode;*/
+//					deleteNode(rightNode);
+//
+//					numOfNode -= 1;
+//					numOfNodeDel += 1;
+//				}
+//#pragma endregion
+
 			}
-			else if (rightSibling <= parent->size) // if right sibling exist
-			{
-				Node *rightNode = parent->ptr[rightSibling];
-				// transfer all keys to cursor and then transfer pointer to next leaf node
-				for (int i = cursor->size, j = 0; j < rightNode->size; i++, j++)
-				{
-					cursor->key[i] = rightNode->key[j];
-					cursor->llPtr[i] = rightNode->llPtr[j];
-				}
-				// cursor->ptr[cursor->size] = NULL;
-				cursor->size += rightNode->size;
-				cursor->ptr[cursor->size] = rightNode->ptr[rightNode->size];
-				removeInternal(parent->key[rightSibling - 1], parent, rightNode); // delete parent node key
-				delete[] rightNode->key;
-				delete[] rightNode->ptr;
-				delete[] rightNode->location;
-				delete rightNode;
-				numOfNode -= 1;
-				numOfNodeDel += 1;
-			}
+
 		}
+
 		return;
+
 	}
 #pragma endregion
 
@@ -893,6 +1042,101 @@ private:
 			*pList = (*pList)->next;
 			free(temp);
 		}
+	}
+
+	void shiftPointer(Node* cursor) {
+
+		cursor->size++;
+		cursor->ptr[cursor->size] = cursor->ptr[cursor->size - 1];
+		cursor->ptr[cursor->size - 1] = NULL;
+	}
+
+	void shiftPointerSibling(Node* siblingNode, Node* nextNode) {
+		siblingNode->size--;
+		siblingNode->ptr[siblingNode->size] = nextNode;
+		siblingNode->ptr[siblingNode->size + 1] = NULL;
+	}
+
+	void shiftArr(Node* node, bool isLeftSibling) {
+		if (isLeftSibling) {
+			for (int i = node->size; i > 0; i--)
+			{
+				node->key[i] = node->key[i - 1];
+				node->llPtr[i] = node->llPtr[i - 1];
+
+			}
+		}
+		else {
+			for (int i = 0; i < node->size; i++)
+			{
+				node->key[i] = node->key[i + 1];
+				node->llPtr[i] = node->llPtr[i + 1];
+			}
+		}
+	}
+
+	void borrowSiblingKey(Node* cursor, Node* siblingNode, bool isLeftSibling) {
+		if (isLeftSibling) {
+			shiftArr(cursor, isLeftSibling);
+			
+			//transfer
+			cursor->key[0] = siblingNode->key[siblingNode->size - 1];
+			cursor->llPtr[0] = siblingNode->llPtr[siblingNode->size - 1];
+		}
+		else {
+			cursor->key[cursor->size - 1] = siblingNode->key[0];
+			cursor->llPtr[cursor->size - 1] = siblingNode->llPtr[0];
+
+			shiftArr(siblingNode, isLeftSibling);
+		}
+	}
+
+	bool isLeftSiblingNode(Node** siblingNode, Node* parent, int leftChildIndex, int rightChildIndex) {
+		bool isLeftSibling = true;
+		//Determine to borrow from left or right sibling node
+		if (leftChildIndex >= 0) {
+			(*siblingNode) = parent->ptr[leftChildIndex];
+
+			if ((*siblingNode)->size >= ceil((MAX + 1) / 2)) {
+				isLeftSibling = true;
+			}
+		}
+		else if (rightChildIndex <= parent->size) {
+			(*siblingNode) = parent->ptr[rightChildIndex];
+
+			if ((*siblingNode)->size >= ceil((MAX + 1) / 2)) {
+				isLeftSibling = false;
+			}
+		}
+		return isLeftSibling;
+	}
+
+	bool canBorrowSiblingKey(Node* parent, int leftChildIndex, int rightChildIndex) {
+		bool canBorrow = false;
+		Node* siblingNode = NULL;
+		//Determine to borrow from left or right sibling node
+		if (leftChildIndex >= 0) {
+			siblingNode = parent->ptr[leftChildIndex];
+
+			if (siblingNode->size - 1 >= ceil((MAX + 1) / 2)) {
+				canBorrow = true;
+			}
+		}
+		else if (rightChildIndex <= parent->size) {
+			siblingNode = parent->ptr[rightChildIndex];
+
+			if (siblingNode->size - 1 >= ceil((MAX + 1) / 2)) {
+				canBorrow = true;
+			}
+		}
+		return canBorrow;
+	}
+
+	void deleteNode(Node* node) {
+		delete[] node->key;
+		delete[] node->ptr;
+		delete[] node->location;
+		delete node;
 	}
 #pragma endregion
 
