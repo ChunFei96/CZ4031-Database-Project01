@@ -189,15 +189,14 @@ public:
 #pragma region Search main function
 	void retrievedetails(int lowlimit, int highlimit, diskStorage *diskStorage)
 	{
-		bool retrievenode = true;
+        vector<int> tIndex;
+        vector<string> tData;
+        vector<uchar *> tAddress;
+        vector<vector<int>> indxNode;
+        vector<vector<string>> dataBlk;
 		int countIndexAccess = 1, countBlkAccess = 1, countMatch = 0;
         float sumRating = 0;
-		vector<int> tIndex;
-		vector<string> tData;
-		vector<uchar *> tAddress;
-		vector<vector<int>> indxNode;
-		vector<vector<string>> dataBlk;
-
+        bool retrievenode = true;
 		if (root == NULL)
 		{
 			cout << "Tree is empty." << endl;
@@ -268,13 +267,13 @@ public:
 				for (uint j = 20; j <= diskStorage->getBlockSize(); j += 20)
 				{
 					void *recordAddress = (uchar *)tAddress[i] + j;
-					if (dataBlk.size() < 5)
+					if (dataBlock.size() < 5)
 						tData.push_back((*(Record *)recordAddress).tconst);
 					if ((*(Record *)recordAddress).numVotes >= lowlimit and (*(Record *)recordAddress).numVotes <= highlimit)
-						sumRating += (*(Record *)recordAddress).averageRating;
+						totalRating += (*(Record *)recordAddress).averageRating;
 				}
-				if (dataBlk.size() < 5)
-					dataBlk.push_back(tData);
+				if (dataBlock.size() < 5)
+					dataBlock.push_back(tData);
 				tData.clear();
 			}
 
@@ -290,11 +289,11 @@ public:
 
 			cout << endl
 				 << "Content of the first 5 Data Blocks = " << endl;
-			for (uint i = 0; i < dataBlk.size(); i++)
+			for (uint i = 0; i < dataBlock.size(); i++)
 			{
 				cout << "| ";
-				for (uint j = 0; j < dataBlk[i].size(); j++)
-					cout << dataBlk[i][j] << " | ";
+				for (uint j = 0; j < dataBlock[i].size(); j++)
+					cout << dataBlock[i][j] << " | ";
 				cout << endl;
 			}
 			cout << "Number of Data Blocks accessed = " << countBlkAccess << endl
@@ -302,7 +301,7 @@ public:
 
 			cout << "Total number of matches = " << countMatch << endl;
 			if (countMatch > 0)
-				cout << "The rating average of 'averageRating' = " << sumRating / countMatch << endl;
+				cout << "The rating average of 'averageRating' = " << totalRating / countMatch << endl;
 			else
 				cout << "No records were found due to 0 match results." << endl;
 		}
