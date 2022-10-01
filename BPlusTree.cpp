@@ -189,15 +189,14 @@ public:
 #pragma region Search main function
 	void retrievedetails(int lowlimit, int highlimit, diskStorage *diskStorage)
 	{
-		bool retrievenode = true;
-		int numOfIndexAccess = 1, numOfBlkAccess = 1, numOfMatch = 0;
-		float totalRating = 0, avgRating = 0;
-		vector<int> tempIndex;
-		vector<string> tempData;
-		vector<uchar *> tempAddress;
-		vector<vector<int>> indexNode;
-		vector<vector<string>> dataBlock;
-
+        vector<int> tIndex;
+        vector<string> tData;
+        vector<uchar *> tAddress;
+        vector<vector<int>> indxNode;
+        vector<vector<string>> dataBlk;
+		int countIndexAccess = 1, countBlkAccess = 1, countMatch = 0;
+        float sumRating = 0;
+        bool retrievenode = true;
 		if (root == NULL)
 		{
 			cout << "Tree is empty." << endl;
@@ -211,40 +210,40 @@ public:
 				{
 					for (int j = 0; j < cursor->size; j++)
 					{
-						if (indexNode.size() < 5 and retrievenode == true)
-							tempIndex.push_back(cursor->key[j]);
+						if (indxNode.size() < 5 and retrievenode == true)
+							tIndex.push_back(cursor->key[j]);
 					}
 
 					if (lowlimit < cursor->key[i])
 					{
 						cursor = cursor->ptr[i];
-						numOfIndexAccess += 1;
+						countIndexAccess += 1;
 						break;
 					}
 					if (i == cursor->size - 1)
 					{
 						cursor = cursor->ptr[i + 1];
-						numOfIndexAccess += 1;
+						countIndexAccess += 1;
 						break;
 					}
 					retrievenode = false;
 				}
-				if (indexNode.size() < 5)
-					indexNode.push_back(tempIndex);
-				tempIndex.clear();
+				if (indxNode.size() < 5)
+					indxNode.push_back(tIndex);
+				tIndex.clear();
 				retrievenode = true;
 			}
 			while (retrievenode)
 			{
 				for (int i = 0; i < cursor->size; i++)
 				{
-					if (indexNode.size() < 5)
-						tempIndex.push_back(cursor->key[i]);
+					if (indxNode.size() < 5)
+						tIndex.push_back(cursor->key[i]);
 
 					if (cursor->key[i] >= lowlimit and cursor->key[i] <= highlimit)
 					{
-						tempAddress = getAllLLNode(cursor->llPtr[i], tempAddress);
-						numOfMatch += cursor->llPtr[i]->size;
+						tAddress = getAllLLNode(cursor->llPtr[i], tAddress);
+						countMatch += cursor->llPtr[i]->size;
 					}
 					else if (cursor->key[i] > highlimit)
 						retrievenode = false;
@@ -252,41 +251,41 @@ public:
 					if (i == cursor->size - 1 and retrievenode == true)
 					{
 						cursor = cursor->ptr[i + 1];
-						numOfIndexAccess += 1;
-						numOfBlkAccess += 1;
+						countIndexAccess += 1;
+						countBlkAccess += 1;
 						break;
 					}
 				}
-				if (indexNode.size() < 5)
-					indexNode.push_back(tempIndex);
-				tempIndex.clear();
+				if (indxNode.size() < 5)
+					indxNode.push_back(tIndex);
+				tIndex.clear();
 			}
 
-			numOfBlkAccess = tempAddress.size();
-			for (uint i = 0; i < numOfBlkAccess; i++)
+			countBlkAccess = tAddress.size();
+			for (uint i = 0; i < countBlkAccess; i++)
 			{
 				for (uint j = 20; j <= diskStorage->getBlockSize(); j += 20)
 				{
-					void *recordAddress = (uchar *)tempAddress[i] + j;
+					void *recordAddress = (uchar *)tAddress[i] + j;
 					if (dataBlock.size() < 5)
-						tempData.push_back((*(Record *)recordAddress).tconst);
+						tData.push_back((*(Record *)recordAddress).tconst);
 					if ((*(Record *)recordAddress).numVotes >= lowlimit and (*(Record *)recordAddress).numVotes <= highlimit)
 						totalRating += (*(Record *)recordAddress).averageRating;
 				}
 				if (dataBlock.size() < 5)
-					dataBlock.push_back(tempData);
-				tempData.clear();
+					dataBlock.push_back(tData);
+				tData.clear();
 			}
 
 			cout << "Content of the first 5 Index Nodes =" << endl;
-			for (uint i = 0; i < indexNode.size(); i++)
+			for (uint i = 0; i < indxNode.size(); i++)
 			{
 				cout << "| ";
-				for (uint j = 0; j < indexNode[i].size(); j++)
-					cout << indexNode[i][j] << " | ";
+				for (uint j = 0; j < indxNode[i].size(); j++)
+					cout << indxNode[i][j] << " | ";
 				cout << endl;
 			}
-			cout << "Number of Index Nodes accessed = " << numOfIndexAccess << endl;
+			cout << "Number of Index Nodes accessed = " << countIndexAccess << endl;
 
 			cout << endl
 				 << "Content of the first 5 Data Blocks = " << endl;
@@ -297,12 +296,12 @@ public:
 					cout << dataBlock[i][j] << " | ";
 				cout << endl;
 			}
-			cout << "Number of Data Blocks accessed = " << numOfBlkAccess << endl
+			cout << "Number of Data Blocks accessed = " << countBlkAccess << endl
 				 << endl;
 
-			cout << "Total number of matches = " << numOfMatch << endl;
-			if (numOfMatch > 0)
-				cout << "The rating average of 'averageRating' = " << totalRating / numOfMatch << endl;
+			cout << "Total number of matches = " << countMatch << endl;
+			if (countMatch > 0)
+				cout << "The rating average of 'averageRating' = " << totalRating / countMatch << endl;
 			else
 				cout << "No records were found due to 0 match results." << endl;
 		}
@@ -805,21 +804,21 @@ private:
 #pragma endregion
 
 #pragma region Search sub functions
-	vector<uchar *> getAllLLNode(LLNode *list, vector<uchar *> &tempAddress)
+	vector<uchar *> getAllLLNode(LLNode *list, vector<uchar *> &tAddress)
 	{
 		LLNode *curr = list;
 		if (list == NULL)
 		{
 			cout << ("List is Empty") << endl;
-			return tempAddress;
+			return tAddress;
 		}
 		while (curr != NULL)
 		{
-			if (find(tempAddress.begin(), tempAddress.end(), curr->location.blockLocation) == tempAddress.end())
-				tempAddress.push_back(curr->location.blockLocation);
+			if (find(tAddress.begin(), tAddress.end(), curr->location.blockLocation) == tAddress.end())
+				tAddress.push_back(curr->location.blockLocation);
 			curr = curr->next;
 		}
-		return tempAddress;
+		return tAddress;
 	}
 	Record getRecords(Location location)
 	{
