@@ -190,13 +190,13 @@ public:
 	void retrievedetails(int lowlimit, int highlimit, diskStorage *diskStorage)
 	{
 		bool retrievenode = true;
-		int numOfIndexAccess = 1, numOfBlkAccess = 1, numOfMatch = 0;
-        float totalRating = 0;
+		int countIndexAccess = 1, countBlkAccess = 1, countMatch = 0;
+        float sumRating = 0;
 		vector<int> tIndex;
 		vector<string> tData;
 		vector<uchar *> tAddress;
 		vector<vector<int>> indxNode;
-		vector<vector<string>> dataBlock;
+		vector<vector<string>> dataBlk;
 
 		if (root == NULL)
 		{
@@ -218,13 +218,13 @@ public:
 					if (lowlimit < cursor->key[i])
 					{
 						cursor = cursor->ptr[i];
-						numOfIndexAccess += 1;
+						countIndexAccess += 1;
 						break;
 					}
 					if (i == cursor->size - 1)
 					{
 						cursor = cursor->ptr[i + 1];
-						numOfIndexAccess += 1;
+						countIndexAccess += 1;
 						break;
 					}
 					retrievenode = false;
@@ -244,7 +244,7 @@ public:
 					if (cursor->key[i] >= lowlimit and cursor->key[i] <= highlimit)
 					{
 						tAddress = getAllLLNode(cursor->llPtr[i], tAddress);
-						numOfMatch += cursor->llPtr[i]->size;
+						countMatch += cursor->llPtr[i]->size;
 					}
 					else if (cursor->key[i] > highlimit)
 						retrievenode = false;
@@ -252,8 +252,8 @@ public:
 					if (i == cursor->size - 1 and retrievenode == true)
 					{
 						cursor = cursor->ptr[i + 1];
-						numOfIndexAccess += 1;
-						numOfBlkAccess += 1;
+						countIndexAccess += 1;
+						countBlkAccess += 1;
 						break;
 					}
 				}
@@ -262,19 +262,19 @@ public:
 				tIndex.clear();
 			}
 
-			numOfBlkAccess = tAddress.size();
-			for (uint i = 0; i < numOfBlkAccess; i++)
+			countBlkAccess = tAddress.size();
+			for (uint i = 0; i < countBlkAccess; i++)
 			{
 				for (uint j = 20; j <= diskStorage->getBlockSize(); j += 20)
 				{
 					void *recordAddress = (uchar *)tAddress[i] + j;
-					if (dataBlock.size() < 5)
+					if (dataBlk.size() < 5)
 						tData.push_back((*(Record *)recordAddress).tconst);
 					if ((*(Record *)recordAddress).numVotes >= lowlimit and (*(Record *)recordAddress).numVotes <= highlimit)
-						totalRating += (*(Record *)recordAddress).averageRating;
+						sumRating += (*(Record *)recordAddress).averageRating;
 				}
-				if (dataBlock.size() < 5)
-					dataBlock.push_back(tData);
+				if (dataBlk.size() < 5)
+					dataBlk.push_back(tData);
 				tData.clear();
 			}
 
@@ -286,23 +286,23 @@ public:
 					cout << indxNode[i][j] << " | ";
 				cout << endl;
 			}
-			cout << "Number of Index Nodes accessed = " << numOfIndexAccess << endl;
+			cout << "Number of Index Nodes accessed = " << countIndexAccess << endl;
 
 			cout << endl
 				 << "Content of the first 5 Data Blocks = " << endl;
-			for (uint i = 0; i < dataBlock.size(); i++)
+			for (uint i = 0; i < dataBlk.size(); i++)
 			{
 				cout << "| ";
-				for (uint j = 0; j < dataBlock[i].size(); j++)
-					cout << dataBlock[i][j] << " | ";
+				for (uint j = 0; j < dataBlk[i].size(); j++)
+					cout << dataBlk[i][j] << " | ";
 				cout << endl;
 			}
-			cout << "Number of Data Blocks accessed = " << numOfBlkAccess << endl
+			cout << "Number of Data Blocks accessed = " << countBlkAccess << endl
 				 << endl;
 
-			cout << "Total number of matches = " << numOfMatch << endl;
-			if (numOfMatch > 0)
-				cout << "The rating average of 'averageRating' = " << totalRating / numOfMatch << endl;
+			cout << "Total number of matches = " << countMatch << endl;
+			if (countMatch > 0)
+				cout << "The rating average of 'averageRating' = " << sumRating / countMatch << endl;
 			else
 				cout << "No records were found due to 0 match results." << endl;
 		}
