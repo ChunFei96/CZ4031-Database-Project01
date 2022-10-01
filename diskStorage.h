@@ -36,8 +36,8 @@ private:
     uint blockSize;
     uint currentBlockSizeUsed;
     uchar *blockPtr;
-    int numBlockAlloc;
-    int numBlockAvail;
+    int numBlockUsed;
+    int numBlockAvailable;
     uint totalRecordSize;
 
 public:
@@ -53,6 +53,6 @@ public:
 
     uint getTotalRecordSize();
 
-    int getNumOfBlockAlloc();
+    int getNumOfBlockUsed();
 };
 #endif

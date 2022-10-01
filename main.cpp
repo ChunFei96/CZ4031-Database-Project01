@@ -129,7 +129,7 @@ int main()
           exp1_table.AddColumn("Size of Database (MB)", 25);
 
           exp1_table.PrintHeader();
-          exp1_table << diskStorage.getNumOfBlockAlloc() << double(diskStorage.getTotalRecordSize()) / (1000 * 1000);
+          exp1_table << diskStorage.getNumOfBlockUsed() << double(diskStorage.getTotalRecordSize()) / (1000 * 1000);
           exp1_table.PrintFooter();
 
           BPlusTree tree = BPlusTree(maxOfNode);
