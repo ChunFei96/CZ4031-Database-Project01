@@ -3,16 +3,16 @@
 
 typedef unsigned int uint;
 typedef unsigned char uchar;
-const int SIZE = 11;
+const int SIZE = 12;
 
 struct Record
 {
     /*
      * Size of each record = 20 bytes
      */
-    char tconst[SIZE];
-    float averageRating;
-    uint numVotes;
+    char tconst[SIZE];   // 12
+    float averageRating; // 4
+    uint numVotes;       // 4
 };
 
 struct Location

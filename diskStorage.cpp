@@ -32,7 +32,7 @@ Location diskStorage::insertRecord(uint sizeOfRecord)
             usedBlockSize += blockSize;
             numBlockAlloc += 1;
             numBlockAvail -= 1;
-            currentBlockSizeUsed = 0; // New block assigned with 0 record inside
+            currentBlockSizeUsed = 0;
         }
         else
         {
@@ -53,17 +53,13 @@ void diskStorage::deleteRecord(Location location)
     int result;
     try
     {
-        // to delete a record, we can change the values stored in that record to NULL
-        // traverse from the beginning of the record location to the end based on the size of the record
-        // fill the elements to the null character
         totalRecordSize -= 20;
         void *recordAddress = (uchar *)location.blockLocation + location.offset;
         fill((uchar *)location.blockLocation + location.offset, (uchar *)location.blockLocation + location.offset + 20, '\0');
 
-        // Block is empty, remove size of block.
-        uchar cmpBlk[blockSize];
-        fill(cmpBlk, cmpBlk + 20, '\0');
-        result = equal(cmpBlk, cmpBlk + 20, location.blockLocation);
+        uchar emptyBlk[blockSize];
+        fill(emptyBlk, emptyBlk + 20, '\0');
+        result = equal(emptyBlk, emptyBlk + 20, location.blockLocation);
 
         if (result == true)
         {
