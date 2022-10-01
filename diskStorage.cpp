@@ -9,7 +9,6 @@ diskStorage::diskStorage(uint diskStorageSize, uint blockSize)
     uchar *diskStoragePtr = nullptr;
     this->diskStoragePtr = new uchar[diskStorageSize];
     this->blockSize = blockSize;
-    this->usedBlockSize = 0;
     this->currentBlockSizeUsed = 0;
     this->blockPtr = nullptr;
     this->numBlockAlloc = 0;
@@ -29,7 +28,6 @@ Location diskStorage::insertRecord(uint sizeOfRecord)
         if (numBlockAvail > 0)
         {
             blockPtr = diskStoragePtr + (numBlockAlloc * blockSize);
-            usedBlockSize += blockSize;
             numBlockAlloc += 1;
             numBlockAvail -= 1;
             currentBlockSizeUsed = 0;

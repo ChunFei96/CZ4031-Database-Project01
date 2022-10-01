@@ -17,8 +17,8 @@ struct Record
 
 struct Location
 {
-    uchar *blockLocation;
-    uint offset;
+    uchar *blockLocation; // pointer
+    uint offset;          //
 };
 
 struct LLNode
@@ -34,7 +34,6 @@ private:
     uint diskStorageSize;
     uchar *diskStoragePtr;
     uint blockSize;
-    uint usedBlockSize;
     uint currentBlockSizeUsed;
     uchar *blockPtr;
     int numBlockAlloc;
