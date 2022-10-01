@@ -20,10 +20,11 @@ Verify installation
 - Press Windows+R and run "CMD"
 - Type in "g++ --version" into the command prompt and press enter.
 - Something like below message should be printed out
-  g++ (GCC) 11.2.0
-  Copyright (C) 2021 Free Software Foundation, Inc.
-  This is free software; see the source for copying conditions. There is NO
-  warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+g++ (GCC) 11.2.0
+Copyright (C) 2021 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 ## Visual Studio Code
 
@@ -32,4 +33,5 @@ Verify installation
 
 ## Running the code
 
+Execute this command in terminal
 cd "PATH OF PROJECT" ; if ($?) { g++ main.cpp diskStorage.cpp -o main  } ; if ($?) { .\main }
