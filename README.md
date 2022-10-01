@@ -34,4 +34,4 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 ## Running the code
 
 Execute this command in terminal
-cd "PATH OF PROJECT" ; if ($?) { g++ main.cpp diskStorage.cpp -o main  } ; if ($?) { .\main }
+cd "PATH OF PROJECT" ; if ($?) { g++ main.cpp diskStorage.cpp table_printer.cpp -o main  } ; if ($?) { .\main }
