@@ -7,7 +7,8 @@
 #include <math.h>
 
 using namespace std;
-const int MAX = 3; // size of each node
+const int MAX_200MB = 10;
+const int MAX_500MB = 25;
 
 class Node
 {
@@ -19,24 +20,37 @@ class Node
 	friend class BPlusTree;
 
 public:
-	Node()
+	Node(int maxOfNode)
 	{
-		// dynamic memory allocation
-		key = new int[MAX];
-		location = new Location[MAX];
-		ptr = new Node *[MAX + 1];
-		llPtr = new LLNode *[MAX];
+		if (maxOfNode == MAX_200MB)
+		{
+			// dynamic memory allocation
+			key = new int[MAX_200MB];
+			location = new Location[MAX_200MB];
+			ptr = new Node * [MAX_200MB + 1];
+			llPtr = new LLNode * [MAX_200MB];
+		}
+		else if (maxOfNode == MAX_500MB)
+		{
+			// dynamic memory allocation
+			key = new int[MAX_500MB];
+			location = new Location[MAX_500MB];
+			ptr = new Node * [MAX_500MB + 1];
+			llPtr = new LLNode * [MAX_500MB];
+		}
+		
 	}
 };
 
 class BPlusTree
 {
 	Node *root;
-	int numOfNode = 0, heightOfTree = 0, numOfNodeDel = 0;
+	int numOfNode = 0, heightOfTree = 0, numOfNodeDel = 0, MAX = 0;
 
 public:
-	BPlusTree()
+	BPlusTree(int maxOfNode_)
 	{
+		MAX = maxOfNode_;
 		CreateRootNode(root);
 	}
 
@@ -100,37 +114,74 @@ public:
 			{
 				// Overflow scenario
 
-				// step3.2.1: create a MAX + 1 sorted array for overflow scenario
-				int overflowArrKey[MAX + 1];
-				LLNode *overflowArrLLNode[MAX + 1];
-				numOfNode += 1;
+				if (MAX == MAX_200MB) {
+					// step3.2.1: create a MAX + 1 sorted array for overflow scenario
+					int overflowArrKey[MAX_200MB + 1];
+					LLNode* overflowArrLLNode[MAX_200MB + 1];
+					numOfNode += 1;
 
-				for (int i = 0; i < MAX; i++)
-				{
-					overflowArrKey[i] = cursor->key[i];
-					overflowArrLLNode[i] = cursor->llPtr[i];
+					for (int i = 0; i < MAX; i++)
+					{
+						overflowArrKey[i] = cursor->key[i];
+						overflowArrLLNode[i] = cursor->llPtr[i];
+					}
+
+					insertKey(overflowArrKey, overflowArrLLNode, cursor->size, keyToInsert, location, true);
+
+					// step3.2.2: create a new leaf node
+					Node* newLeaf = CreateLeafNode(cursor->ptr[MAX], overflowArrKey, overflowArrLLNode);
+
+					// step3.2.3: reconstruct the current node
+					ReconstructCurrentNode(cursor, newLeaf, overflowArrKey, overflowArrLLNode);
+
+					// step3.2.4: update the parent nodes
+					if (cursor == root)
+					{
+						// if cursor is a root node, we create a new parent root
+						Node* parentRoot = new Node(MAX);
+						CreateParentNode(parentRoot, cursor, newLeaf);
+					}
+					else
+					{
+						// insert new key in parent node
+						InsertParent(parent, newLeaf);
+					}
 				}
-
-				insertKey(overflowArrKey, overflowArrLLNode, cursor->size, keyToInsert, location, true);
-
-				// step3.2.2: create a new leaf node
-				Node *newLeaf = CreateLeafNode(cursor->ptr[MAX], overflowArrKey, overflowArrLLNode);
-
-				// step3.2.3: reconstruct the current node
-				ReconstructCurrentNode(cursor, newLeaf, overflowArrKey, overflowArrLLNode);
-
-				// step3.2.4: update the parent nodes
-				if (cursor == root)
+				else if (MAX == MAX_500MB)
 				{
-					// if cursor is a root node, we create a new parent root
-					Node *parentRoot = new Node;
-					CreateParentNode(parentRoot, cursor, newLeaf);
+					// step3.2.1: create a MAX + 1 sorted array for overflow scenario
+					int overflowArrKey[MAX_500MB + 1];
+					LLNode* overflowArrLLNode[MAX_500MB + 1];
+					numOfNode += 1;
+
+					for (int i = 0; i < MAX; i++)
+					{
+						overflowArrKey[i] = cursor->key[i];
+						overflowArrLLNode[i] = cursor->llPtr[i];
+					}
+
+					insertKey(overflowArrKey, overflowArrLLNode, cursor->size, keyToInsert, location, true);
+
+					// step3.2.2: create a new leaf node
+					Node* newLeaf = CreateLeafNode(cursor->ptr[MAX], overflowArrKey, overflowArrLLNode);
+
+					// step3.2.3: reconstruct the current node
+					ReconstructCurrentNode(cursor, newLeaf, overflowArrKey, overflowArrLLNode);
+
+					// step3.2.4: update the parent nodes
+					if (cursor == root)
+					{
+						// if cursor is a root node, we create a new parent root
+						Node* parentRoot = new Node(MAX);
+						CreateParentNode(parentRoot, cursor, newLeaf);
+					}
+					else
+					{
+						// insert new key in parent node
+						InsertParent(parent, newLeaf);
+					}
 				}
-				else
-				{
-					// insert new key in parent node
-					InsertParent(parent, newLeaf);
-				}
+				
 			}
 		}
 	}
@@ -233,8 +284,8 @@ public:
 			{
 				cout << "| ";
 				for (uint j = 0; j < indexNode[i].size(); j++)
-					cout << indexNode[i][j] << " ";
-				cout << "| " << endl;
+					cout << indexNode[i][j] << " | ";
+				cout << endl;
 			}
 			cout << "Number of Index Nodes accessed = " << numOfIndexAccess << endl;
 
@@ -244,8 +295,9 @@ public:
 			{
 				cout << "| ";
 				for (uint j = 0; j < dataBlock[i].size(); j++)
-					cout << dataBlock[i][j] << " ";
-				cout << "| " << endl;
+					cout << dataBlock[i][j] << " | ";
+				cout << endl;
+				
 			}
 			cout << "Number of Data Blocks accessed = " << numOfBlkAccess << endl
 				 << endl;
@@ -261,7 +313,7 @@ public:
 #pragma endregion
 
 #pragma region Delete main function
-	void RmoveEvent(int x, bufferPool* bufferPool)
+	void RemoveEvent(int x, bufferPool* bufferPool)
 
 	{
 		//delete logic
@@ -414,7 +466,7 @@ public:
 						// update the pointer
 						leftNode->ptr[leftNode->size] = cursor->ptr[cursor->size];
 
-						removeInternal(parent->key[leftChildren], parent, cursor);
+						removeParent(parent->key[leftChildren], parent, cursor);
 
 						deleteNode(cursor);
 					}
@@ -434,7 +486,7 @@ public:
 						// update the pointer
 						cursor->ptr[cursor->size] = rightNode->ptr[rightNode->size];
 
-						removeInternal(parent->key[rightChildern - 1], parent, rightNode);
+						removeParent(parent->key[rightChildern - 1], parent, rightNode);
 
 						deleteNode(rightNode);
 					}
@@ -547,7 +599,7 @@ public:
 //					//leftNode->ptr[leftNode->size] = NULL;
 //					leftNode->size += cursor->size;
 //					leftNode->ptr[leftNode->size] = cursor->ptr[cursor->size];
-//					removeInternal(parent->key[leftChildren], parent, cursor);// delete parent node key
+//					removeParent(parent->key[leftChildren], parent, cursor);// delete parent node key
 //
 //					//delete[] cursor->key;
 //					//delete[] cursor->ptr;
@@ -575,7 +627,7 @@ public:
 //					//cursor->ptr[cursor->size] = NULL;
 //					cursor->size += rightNode->size;
 //					cursor->ptr[cursor->size] = rightNode->ptr[rightNode->size];
-//					removeInternal(parent->key[rightChildern - 1], parent, rightNode);// delete parent node key
+//					removeParent(parent->key[rightChildern - 1], parent, rightNode);// delete parent node key
 //
 //					/*delete[] rightNode->key;
 //					delete[] rightNode->ptr;
@@ -671,58 +723,117 @@ private:
 		}
 		else
 		{
-			// overflow in internal, create new internal node
-			Node *newInternalNode = new Node;
-			// create virtual internal node to store the key
-			int tempKey[MAX + 1];
-			Node *tempPtr[MAX + 2];
-			// increase the number of node by 1
-			numOfNode += 1;
-			for (int i = 0; i < MAX; i++)
-				tempKey[i] = cursor->key[i];
-			for (int i = 0; i < MAX + 1; i++)
-				tempPtr[i] = cursor->ptr[i];
-			int i = 0, j;
-			while (keyToInsert > tempKey[i] && i < MAX)
-				i++;
-			// make space for the new key
-			for (int j = MAX + 1; j > i; j--)
-				tempKey[j] = tempKey[j - 1];
-
-			tempKey[i] = keyToInsert;
-
-			for (int j = MAX + 2; j > i + 1; j--)
-				tempPtr[j] = tempPtr[j - 1];
-
-			tempPtr[i + 1] = child;
-			newInternalNode->IS_LEAF = false;
-			// split the cursor into two different nodes
-			cursor->size = (MAX + 1) / 2;
-			// update the current internal node
-			for (int h = 0; h < cursor->size; h++)
-				cursor->key[h] = tempKey[h];
-
-			for (int k = 0; k < cursor->size + 1; k++)
-				cursor->ptr[k] = tempPtr[k];
-
-			newInternalNode->size = MAX - ((MAX + 1) / 2);
-			// give elements and pointers to the new node
-			for (i = 0, j = cursor->size + 1; i < newInternalNode->size; i++, j++)
-				newInternalNode->key[i] = tempKey[j];
-			for (i = 0, j = cursor->size + 1; i < newInternalNode->size + 1; i++, j++)
-				newInternalNode->ptr[i] = tempPtr[j];
-
-			if (cursor == root)
+			if (MAX == MAX_200MB)
 			{
-				// if the cursor is a root node, create new parent root
-				Node *parentRoot = new Node;
-				CreateParentNode(parentRoot, cursor, newInternalNode);
+				// overflow in internal, create new internal node
+				Node* newInternalNode = new Node(MAX);
+				// create virtual internal node to store the key
+				int tempKey[MAX_200MB + 1];
+				Node* tempPtr[MAX_200MB + 2];
+				// increase the number of node by 1
+				numOfNode += 1;
+				for (int i = 0; i < MAX; i++)
+					tempKey[i] = cursor->key[i];
+				for (int i = 0; i < MAX + 1; i++)
+					tempPtr[i] = cursor->ptr[i];
+				int i = 0, j;
+				while (keyToInsert > tempKey[i] && i < MAX)
+					i++;
+				// make space for the new key
+				for (int j = MAX + 1; j > i; j--)
+					tempKey[j] = tempKey[j - 1];
+
+				tempKey[i] = keyToInsert;
+
+				for (int j = MAX + 2; j > i + 1; j--)
+					tempPtr[j] = tempPtr[j - 1];
+
+				tempPtr[i + 1] = child;
+				newInternalNode->IS_LEAF = false;
+				// split the cursor into two different nodes
+				cursor->size = (MAX + 1) / 2;
+				// update the current internal node
+				for (int h = 0; h < cursor->size; h++)
+					cursor->key[h] = tempKey[h];
+
+				for (int k = 0; k < cursor->size + 1; k++)
+					cursor->ptr[k] = tempPtr[k];
+
+				newInternalNode->size = MAX - ((MAX + 1) / 2);
+				// give elements and pointers to the new node
+				for (i = 0, j = cursor->size + 1; i < newInternalNode->size; i++, j++)
+					newInternalNode->key[i] = tempKey[j];
+				for (i = 0, j = cursor->size + 1; i < newInternalNode->size + 1; i++, j++)
+					newInternalNode->ptr[i] = tempPtr[j];
+
+				if (cursor == root)
+				{
+					// if the cursor is a root node, create new parent root
+					Node* parentRoot = new Node(MAX);
+					CreateParentNode(parentRoot, cursor, newInternalNode);
+				}
+				else
+				{
+					// use depth first search to find the parent of the cursor recursively
+					InsertParent(findParent(root, cursor), newInternalNode);
+				}
 			}
-			else
+			else if (MAX == MAX_500MB)
 			{
-				// use depth first search to find the parent of the cursor recursively
-				InsertParent(findParent(root, cursor), newInternalNode);
+				// overflow in internal, create new internal node
+				Node* newInternalNode = new Node(MAX);
+				// create virtual internal node to store the key
+				int tempKey[MAX_500MB + 1];
+				Node* tempPtr[MAX_500MB + 2];
+				// increase the number of node by 1
+				numOfNode += 1;
+				for (int i = 0; i < MAX; i++)
+					tempKey[i] = cursor->key[i];
+				for (int i = 0; i < MAX + 1; i++)
+					tempPtr[i] = cursor->ptr[i];
+				int i = 0, j;
+				while (keyToInsert > tempKey[i] && i < MAX)
+					i++;
+				// make space for the new key
+				for (int j = MAX + 1; j > i; j--)
+					tempKey[j] = tempKey[j - 1];
+
+				tempKey[i] = keyToInsert;
+
+				for (int j = MAX + 2; j > i + 1; j--)
+					tempPtr[j] = tempPtr[j - 1];
+
+				tempPtr[i + 1] = child;
+				newInternalNode->IS_LEAF = false;
+				// split the cursor into two different nodes
+				cursor->size = (MAX + 1) / 2;
+				// update the current internal node
+				for (int h = 0; h < cursor->size; h++)
+					cursor->key[h] = tempKey[h];
+
+				for (int k = 0; k < cursor->size + 1; k++)
+					cursor->ptr[k] = tempPtr[k];
+
+				newInternalNode->size = MAX - ((MAX + 1) / 2);
+				// give elements and pointers to the new node
+				for (i = 0, j = cursor->size + 1; i < newInternalNode->size; i++, j++)
+					newInternalNode->key[i] = tempKey[j];
+				for (i = 0, j = cursor->size + 1; i < newInternalNode->size + 1; i++, j++)
+					newInternalNode->ptr[i] = tempPtr[j];
+
+				if (cursor == root)
+				{
+					// if the cursor is a root node, create new parent root
+					Node* parentRoot = new Node(MAX);
+					CreateParentNode(parentRoot, cursor, newInternalNode);
+				}
+				else
+				{
+					// use depth first search to find the parent of the cursor recursively
+					InsertParent(findParent(root, cursor), newInternalNode);
+				}
 			}
+			
 		}
 	}
 
@@ -757,7 +868,7 @@ private:
 
 	void CreateRootNode(Node *&root)
 	{
-		root = new Node;
+		root = new Node(MAX);
 		root->IS_LEAF = true;
 		root->size = 1;
 		numOfNode = 1;
@@ -784,7 +895,7 @@ private:
 
 	Node *CreateLeafNode(Node *nextNode, int *overflowArrKey, LLNode **overflowArrLLNode)
 	{
-		Node *leafNode = new Node();
+		Node *leafNode = new Node(MAX);
 		leafNode->IS_LEAF = true;
 		leafNode->size = floor((MAX + 1) / 2);
 		leafNode->ptr[leafNode->size] = nextNode;
@@ -873,120 +984,133 @@ private:
 #pragma endregion
 
 #pragma region Delete sub functions
-	void removeInternal(int x, Node *cursor, Node *child)
+	void removeParent(int x, Node *cursor, Node *child)
 	{
 		// deleting the key x first
 		// checking if key from root is to be deleted
-		if (cursor == root)
+		if (cursor == root && cursor->size == 1)
 		{
-			if (cursor->size == 1) // if only one key is left, change root
+			heightOfTree -= 1;
+			numOfNode -= 1;
+			numOfNodeDel += 1;
+			// if only one key is left, change root
+			if (cursor->ptr[1] == child)
 			{
-				heightOfTree -= 1;
-				numOfNode -= 1;
-				numOfNodeDel += 1;
-				if (cursor->ptr[1] == child)
-				{
-					delete[] child->key;
-					delete[] child->ptr;
-					delete child;
-					root = cursor->ptr[0];
-					delete[] cursor->key;
-					delete[] cursor->ptr;
-					delete cursor;
-					return;
-				}
-				else if (cursor->ptr[0] == child)
-				{
-					delete[] child->key;
-					delete[] child->ptr;
-					root = cursor->ptr[1];
-					delete[] cursor->key;
-					delete[] cursor->ptr;
-					return;
-				}
+				delete[] child->key;
+				delete[] child->ptr;
+				delete child;
+				root = cursor->ptr[0];
+				delete[] cursor->key;
+				delete[] cursor->ptr;
+				delete cursor;
+				return;
+			}
+			else if (cursor->ptr[0] == child)
+			{
+				delete[] child->key;
+				delete[] child->ptr;
+				root = cursor->ptr[1];
+				delete[] cursor->key;
+				delete[] cursor->ptr;
+				return;
 			}
 		}
-		int pos;
-		for (pos = 0; pos < cursor->size; pos++)
+		int keyToDeleteIndex;
+		for (keyToDeleteIndex = 0; keyToDeleteIndex < cursor->size; keyToDeleteIndex++)
 		{
-			if (cursor->key[pos] == x)
+			if (cursor->key[keyToDeleteIndex] == x)
 				break;
 		}
-		for (int i = pos; i < cursor->size; i++)
+		for (int i = keyToDeleteIndex; i < cursor->size; i++)
 			cursor->key[i] = cursor->key[i + 1];
 
 		// now deleting the pointer child
-		for (pos = 0; pos < cursor->size + 1; pos++)
+		for (keyToDeleteIndex = 0; keyToDeleteIndex < cursor->size + 1; keyToDeleteIndex++)
 		{
-			if (cursor->ptr[pos] == child)
+			if (cursor->ptr[keyToDeleteIndex] == child)
 				break;
 		}
-		for (int i = pos; i < cursor->size + 1; i++)
+		for (int i = keyToDeleteIndex; i < cursor->size + 1; i++)
 			cursor->ptr[i] = cursor->ptr[i + 1];
 		cursor->size--;
 		if (cursor->size >= (MAX + 1) / 2 - 1) // no underflow
 			return;
-		// underflow, try to transfer first
+
 		if (cursor == root)
 			return;
 		Node *parent = findParent(root, cursor);
-		int leftSibling, rightSibling;
+		int leftSibling, rightSibling = -1;
 		// finding left n right sibling of cursor
-		for (pos = 0; pos < parent->size + 1; pos++)
+		for (keyToDeleteIndex = 0; keyToDeleteIndex < parent->size + 1; keyToDeleteIndex++)
 		{
-			if (parent->ptr[pos] == cursor)
+			if (parent->ptr[keyToDeleteIndex] == cursor)
 			{
-				leftSibling = pos - 1;
-				rightSibling = pos + 1;
+				leftSibling = keyToDeleteIndex - 1;
+				rightSibling = keyToDeleteIndex + 1;
 				break;
 			}
 		}
-		// try to transfer
+		// borrow key from left internal sibling node
 		if (leftSibling >= 0) // if left sibling exists
 		{
 			Node *leftNode = parent->ptr[leftSibling];
-			// check if it is possible to transfer
+			// check if the left sibling node has enough key to borrow
 			if (leftNode->size >= (MAX + 1) / 2)
 			{
-				// make space for key transfer
+				// shift key arr to insert the key
 				for (int i = cursor->size; i > 0; i--)
 					cursor->key[i] = cursor->key[i - 1];
-				// transfer key from left sibling through parent
-				cursor->key[0] = parent->key[leftSibling];
-				parent->key[leftSibling] = leftNode->key[leftNode->size - 1];
-				// transfer last pointer from leftnode to cursor
-				// make space for transfer of ptr
+
+				// shift child nodes arr to insert the child nodes 
 				for (int i = cursor->size + 1; i > 0; i--)
 					cursor->ptr[i] = cursor->ptr[i - 1];
-				// transfer ptr
+
+				// borrow key
+				cursor->key[0] = parent->key[leftSibling];
+				parent->key[leftSibling] = leftNode->key[leftNode->size - 1];
+
+				// update child node
 				cursor->ptr[0] = leftNode->ptr[leftNode->size];
+
+				// update size for both nodes
 				cursor->size++;
 				leftNode->size--;
+
 				return;
 			}
 		}
+
+		// borrow key from right internal sibling node
 		if (rightSibling <= parent->size) // check if right sibling exist
 		{
 			Node *rightNode = parent->ptr[rightSibling];
-			// check if it is possible to transfer
+			// check if the right sibling node has enough key to borrow
 			if (rightNode->size >= (MAX + 1) / 2)
 			{
-				// transfer key from right sibling through parent
-				cursor->key[cursor->size] = parent->key[pos];
-				parent->key[pos] = rightNode->key[0];
+				// borrow key
+				cursor->key[cursor->size] = parent->key[keyToDeleteIndex];
+				parent->key[keyToDeleteIndex] = rightNode->key[0];
+
+				// update child node
+				cursor->ptr[cursor->size + 1] = rightNode->ptr[0];
+
+				// remove the borrowed key
 				for (int i = 0; i < rightNode->size - 1; i++)
 					rightNode->key[i] = rightNode->key[i + 1];
-				// transfer first pointer from rightnode to cursor
-				// transfer ptr
-				cursor->ptr[cursor->size + 1] = rightNode->ptr[0];
+				
+				// remove the child node 
 				for (int i = 0; i < rightNode->size; ++i)
 					rightNode->ptr[i] = rightNode->ptr[i + 1];
+
+				// update size for both nodes
 				cursor->size++;
 				rightNode->size--;
+
 				return;
 			}
 		}
-		// transfer wasnt posssible hence do merging
+
+		// merge with other internal sibling
 		if (leftSibling >= 0)
 		{
 			// leftnode + parent key + cursor
@@ -1002,7 +1126,7 @@ private:
 			leftNode->size += cursor->size + 1;
 			cursor->size = 0;
 			// delete cursor
-			removeInternal(parent->key[leftSibling], parent, cursor);
+			removeParent(parent->key[leftSibling], parent, cursor);
 			numOfNode -= 1;
 			numOfNodeDel += 1;
 		}
@@ -1021,7 +1145,7 @@ private:
 			cursor->size += rightNode->size + 1;
 			rightNode->size = 0;
 			// delete cursor
-			removeInternal(parent->key[rightSibling - 1], parent, rightNode);
+			removeParent(parent->key[rightSibling - 1], parent, rightNode);
 			numOfNode -= 1;
 			numOfNodeDel += 1;
 		}
