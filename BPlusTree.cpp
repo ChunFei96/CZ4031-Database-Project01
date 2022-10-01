@@ -196,6 +196,8 @@ public:
         vector<vector<string>> dataBlk;
 		int countIndexAccess = 1, countBlkAccess = 1, countMatch = 0;
         float sumRating = 0;
+        
+        
         bool retrievenode = true;
 		if (root == NULL)
 		{
