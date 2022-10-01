@@ -11,8 +11,8 @@ diskStorage::diskStorage(uint diskStorageSize, uint blockSize)
     this->blockSize = blockSize;
     this->currentBlockSizeUsed = 0;
     this->blockPtr = nullptr;
-    this->numBlockAlloc = 0;
-    this->numBlockAvail = diskStorageSize / blockSize;
+    this->numBlockUsed = 0;
+    this->numBlockAvailable = diskStorageSize / blockSize;
     this->totalRecordSize = 0;
 }
 
@@ -23,13 +23,13 @@ Location diskStorage::insertRecord(uint sizeOfRecord)
         cout << "ERROR! - fail to allocate space: size of record is greater than block size.\n";
         throw "ERROR! - fail to allocate space: size of record is greater than block size.\n";
     }
-    else if (blockSize < (currentBlockSizeUsed + sizeOfRecord) or numBlockAlloc == 0)
+    else if (blockSize < (currentBlockSizeUsed + sizeOfRecord) or numBlockUsed == 0)
     {
-        if (numBlockAvail > 0)
+        if (numBlockAvailable > 0)
         {
-            blockPtr = diskStoragePtr + (numBlockAlloc * blockSize);
-            numBlockAlloc += 1;
-            numBlockAvail -= 1;
+            blockPtr = diskStoragePtr + (numBlockUsed * blockSize);
+            numBlockUsed += 1;
+            numBlockAvailable -= 1;
             currentBlockSizeUsed = 0;
         }
         else
@@ -62,8 +62,8 @@ void diskStorage::deleteRecord(Location location)
         if (result == true)
         {
             currentBlockSizeUsed -= blockSize;
-            numBlockAlloc--;
-            numBlockAvail++;
+            numBlockUsed--;
+            numBlockAvailable++;
         }
     }
 
@@ -83,7 +83,7 @@ uint diskStorage::getTotalRecordSize()
     return totalRecordSize;
 }
 
-int diskStorage::getNumOfBlockAlloc()
+int diskStorage::getNumOfBlockUsed()
 {
-    return numBlockAlloc;
+    return numBlockUsed;
 }
