@@ -81,7 +81,7 @@ int main()
           print_lines_with_border(title);
 
           fstream file;
-          file.open("data/data_5k.tsv", ios::in);
+          file.open("data/data.tsv", ios::in);
 
           diskStorage diskStorage{MEMORY, blockSize[i]};
           vector<Location> dataset;
