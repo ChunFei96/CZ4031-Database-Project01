@@ -71,7 +71,7 @@ using bprinter::TablePrinter;
 
 int main()
 {
-     const int MEMORY = 300000000; // 300 MB of memory allocated
+     const int MEMORY = 300000000;
 
      uint blockSize[2] = {200, 500};
 

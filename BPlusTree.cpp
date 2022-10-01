@@ -314,24 +314,15 @@ public:
 
 #pragma region Delete main function
 	void RemoveEvent(int x, bufferPool* bufferPool)
-
 	{
-		//delete logic
-		if (root == NULL)
-
-		{
-			cout << "Tree is Empty!!\n";
-		}
-
-		else
-
+		if(root != NULL)
 		{
 			Node* cursor = root;
 			Node* parent = NULL;
 			int leftChildren, rightChildern;
 			bool isUnderFlow = false;
 
-			//cursor will traverse to the leaf node possibly consisting the key
+			// travel to the leaf node while keep track the parent node
 			while (!cursor->IS_LEAF)
 			{
 				bool isFound = false;
@@ -374,11 +365,11 @@ public:
 
 			if (!found)//if key does not exist in that leaf node
 			{
-				cout << "Key is node found in B+ tree." << endl;
+				cout << "No key is found! Deletion failed" << endl;
 				return;
 			}
 
-			if (cursor == root)//if it is root node, then make all pointers NULL
+			if (cursor == root)
 			{
 				heightOfTree -= 1;
 				for (int i = 0; i < MAX + 1; i++)
@@ -386,7 +377,7 @@ public:
 					cursor->ptr[i] = NULL;
 				}
 
-				if (cursor->size == 0)//if all keys are deleted
+				if (cursor->size == 0)
 				{
 					deleteNode(cursor);
 
@@ -416,7 +407,6 @@ public:
 
 			if (isUnderFlow)
 			{
-#pragma region MY CODE 
 				// if the node keys is less than minimum, check if sibling able to borrow key
 				bool isCanBorrowSiblingKey = canBorrowSiblingKey(parent, leftChildren, rightChildern);
 
@@ -495,153 +485,7 @@ public:
 					numOfNode -= 1;
 					numOfNodeDel += 1;
 				}
-#pragma endregion
-//
-//#pragma region Borrow key from sibling OLD
-//				//underflow condition
-//				//first we try to transfer a key from sibling node
-//				//check if left sibling exists
-//				if (leftChildren >= 0)
-//				{
-//					Node* leftNode = parent->ptr[leftChildren];
-//					//check if it is possible to transfer
-//
-//					if (leftNode->size >= (MAX + 1) / 2 + 1)
-//					{
-//						//make space for transfer
-//						for (int i = cursor->size; i > 0; i--)
-//						{
-//							cursor->key[i] = cursor->key[i - 1];
-//							cursor->llPtr[i] = cursor->llPtr[i - 1];
-//
-//						}
-//						//transfer
-//						cursor->key[0] = leftNode->key[leftNode->size - 1];
-//						cursor->llPtr[0] = leftNode->llPtr[leftNode->size - 1];
-//
-//						//shift pointer to next leaf
-//						cursor->size++;
-//						cursor->ptr[cursor->size] = cursor->ptr[cursor->size - 1];
-//						cursor->ptr[cursor->size - 1] = NULL;
-//
-//						shiftPointer(cursor);
-//
-//						//shift pointer of leftsibling
-//						leftNode->size--;
-//						leftNode->ptr[leftNode->size] = cursor;
-//						leftNode->ptr[leftNode->size + 1] = NULL;
-//
-//						shiftPointerSibling(leftNode, cursor);
-//						//update parent
-//						parent->key[leftChildren] = cursor->key[0];
-//						parent->llPtr[leftChildren] = cursor->llPtr[0];
-//
-//						return;
-//
-//					}
-//
-//				}
-//
-//				if (rightChildern <= parent->size)//check if right sibling exist
-//				{
-//					Node* rightNode = parent->ptr[rightChildern];
-//
-//					//check if it is possible to transfer
-//					if (rightNode->size >= (MAX + 1) / 2 + 1)
-//					{
-//						//transfer
-//						cursor->key[cursor->size - 1] = rightNode->key[0];
-//						cursor->llPtr[cursor->size - 1] = rightNode->llPtr[0];
-//
-//						//shift pointer to next leaf
-//						cursor->size++;
-//						cursor->ptr[cursor->size] = cursor->ptr[cursor->size - 1];
-//						cursor->ptr[cursor->size - 1] = NULL;
-//
-//						//shift pointer of rightsibling
-//						rightNode->size--;
-//						rightNode->ptr[rightNode->size] = rightNode->ptr[rightNode->size + 1];
-//						rightNode->ptr[rightNode->size + 1] = NULL;
-//
-//						//shift conent of right sibling
-//						for (int i = 0; i < rightNode->size; i++)
-//						{
-//							rightNode->key[i] = rightNode->key[i + 1];
-//							rightNode->llPtr[i] = rightNode->llPtr[i + 1];
-//						}
-//
-//						//update parent
-//						parent->key[rightChildern - 1] = rightNode->key[0];
-//						parent->llPtr[rightChildern - 1] = rightNode->llPtr[0];
-//
-//						return;
-//
-//					}
-//
-//				}
-//#pragma endregion
-//
-//
-//#pragma region Merge and delete the node OLD
-//				//merge and delete the node
-//
-//				if (leftChildren >= 0)//if left sibling exist
-//				{
-//					Node* leftNode = parent->ptr[leftChildren];
-//
-//					// transfer all keys to leftsibling and then transfer pointer to next leaf node
-//					for (int i = leftNode->size, j = 0; j < cursor->size; i++, j++)
-//					{
-//						leftNode->key[i] = cursor->key[j];
-//						leftNode->llPtr[i] = cursor->llPtr[j];
-//					}
-//
-//					//leftNode->ptr[leftNode->size] = NULL;
-//					leftNode->size += cursor->size;
-//					leftNode->ptr[leftNode->size] = cursor->ptr[cursor->size];
-//					removeParent(parent->key[leftChildren], parent, cursor);// delete parent node key
-//
-//					//delete[] cursor->key;
-//					//delete[] cursor->ptr;
-//					//delete[] cursor->location;
-//					//delete cursor;
-//					deleteNode(cursor);
-//
-//					numOfNode -= 1;
-//					numOfNodeDel += 1;
-//				}
-//
-//				else if (rightChildern <= parent->size)//if right sibling exist
-//
-//				{
-//
-//					Node* rightNode = parent->ptr[rightChildern];
-//
-//					// transfer all keys to cursor and then transfer pointer to next leaf node
-//					for (int i = cursor->size, j = 0; j < rightNode->size; i++, j++)
-//					{
-//						cursor->key[i] = rightNode->key[j];
-//						cursor->llPtr[i] = rightNode->llPtr[j];
-//					}
-//
-//					//cursor->ptr[cursor->size] = NULL;
-//					cursor->size += rightNode->size;
-//					cursor->ptr[cursor->size] = rightNode->ptr[rightNode->size];
-//					removeParent(parent->key[rightChildern - 1], parent, rightNode);// delete parent node key
-//
-//					/*delete[] rightNode->key;
-//					delete[] rightNode->ptr;
-//					delete[] rightNode->location;
-//					delete rightNode;*/
-//					deleteNode(rightNode);
-//
-//					numOfNode -= 1;
-//					numOfNodeDel += 1;
-//				}
-//#pragma endregion
-
 			}
-
 		}
 
 		return;
