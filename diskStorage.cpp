@@ -1,23 +1,23 @@
 #include <iostream>
-#include "bufferPool.h"
+#include "diskStorage.h"
 
 using namespace std;
 
-bufferPool::bufferPool(uint bufferPoolSize, uint blockSize)
+diskStorage::diskStorage(uint diskStorageSize, uint blockSize)
 {
-    this->bufferPoolSize = bufferPoolSize;
-    uchar *bufferPoolPtr = nullptr;
-    this->bufferPoolPtr = new uchar[bufferPoolSize];
+    this->diskStorageSize = diskStorageSize;
+    uchar *diskStoragePtr = nullptr;
+    this->diskStoragePtr = new uchar[diskStorageSize];
     this->blockSize = blockSize;
     this->usedBlockSize = 0;
     this->currentBlockSizeUsed = 0;
     this->blockPtr = nullptr;
     this->numBlockAlloc = 0;
-    this->numBlockAvail = bufferPoolSize / blockSize;
+    this->numBlockAvail = diskStorageSize / blockSize;
     this->totalRecordSize = 0;
 }
 
-Location bufferPool::insertRecord(uint sizeOfRecord)
+Location diskStorage::insertRecord(uint sizeOfRecord)
 {
     if (sizeOfRecord > blockSize)
     {
@@ -28,7 +28,7 @@ Location bufferPool::insertRecord(uint sizeOfRecord)
     {
         if (numBlockAvail > 0)
         {
-            blockPtr = bufferPoolPtr + (numBlockAlloc * blockSize);
+            blockPtr = diskStoragePtr + (numBlockAlloc * blockSize);
             usedBlockSize += blockSize;
             numBlockAlloc += 1;
             numBlockAvail -= 1;
@@ -48,7 +48,7 @@ Location bufferPool::insertRecord(uint sizeOfRecord)
     return recordAddress;
 }
 
-void bufferPool::deleteRecord(Location location)
+void diskStorage::deleteRecord(Location location)
 {
     int result;
     try
@@ -79,17 +79,17 @@ void bufferPool::deleteRecord(Location location)
     }
 }
 
-uint bufferPool::getBlockSize()
+uint diskStorage::getBlockSize()
 {
     return blockSize;
 }
 
-uint bufferPool::getTotalRecordSize()
+uint diskStorage::getTotalRecordSize()
 {
     return totalRecordSize;
 }
 
-int bufferPool::getNumOfBlockAlloc()
+int diskStorage::getNumOfBlockAlloc()
 {
     return numBlockAlloc;
 }

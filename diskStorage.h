@@ -1,5 +1,5 @@
-#ifndef BUFFER_POOL_H
-#define BUFFER_POOL_H
+#ifndef DISK_STORAGE_H
+#define DISK_STORAGE_H
 
 typedef unsigned int uint;
 typedef unsigned char uchar;
@@ -28,11 +28,11 @@ struct LLNode
     struct LLNode *next;
 };
 
-class bufferPool
+class diskStorage
 {
 private:
-    uint bufferPoolSize;
-    uchar *bufferPoolPtr;
+    uint diskStorageSize;
+    uchar *diskStoragePtr;
     uint blockSize;
     uint usedBlockSize;
     uint currentBlockSizeUsed;
@@ -42,9 +42,9 @@ private:
     uint totalRecordSize;
 
 public:
-    bufferPool(uint bufferPoolSize, uint blockSize);
+    diskStorage(uint diskStorageSize, uint blockSize);
 
-    //~bufferPool();
+    //~diskStorage();
 
     Location insertRecord(uint sizeOfRecord);
 

@@ -3,7 +3,7 @@
 #include <string>
 #include <climits>
 #include <vector>
-#include "bufferPool.h"
+#include "diskStorage.h"
 #include <math.h>
 
 using namespace std;
@@ -27,18 +27,17 @@ public:
 			// dynamic memory allocation
 			key = new int[MAX_200MB];
 			location = new Location[MAX_200MB];
-			ptr = new Node * [MAX_200MB + 1];
-			llPtr = new LLNode * [MAX_200MB];
+			ptr = new Node *[MAX_200MB + 1];
+			llPtr = new LLNode *[MAX_200MB];
 		}
 		else if (maxOfNode == MAX_500MB)
 		{
 			// dynamic memory allocation
 			key = new int[MAX_500MB];
 			location = new Location[MAX_500MB];
-			ptr = new Node * [MAX_500MB + 1];
-			llPtr = new LLNode * [MAX_500MB];
+			ptr = new Node *[MAX_500MB + 1];
+			llPtr = new LLNode *[MAX_500MB];
 		}
-		
 	}
 };
 
@@ -114,10 +113,11 @@ public:
 			{
 				// Overflow scenario
 
-				if (MAX == MAX_200MB) {
+				if (MAX == MAX_200MB)
+				{
 					// step3.2.1: create a MAX + 1 sorted array for overflow scenario
 					int overflowArrKey[MAX_200MB + 1];
-					LLNode* overflowArrLLNode[MAX_200MB + 1];
+					LLNode *overflowArrLLNode[MAX_200MB + 1];
 					numOfNode += 1;
 
 					for (int i = 0; i < MAX; i++)
@@ -129,7 +129,7 @@ public:
 					insertKey(overflowArrKey, overflowArrLLNode, cursor->size, keyToInsert, location, true);
 
 					// step3.2.2: create a new leaf node
-					Node* newLeaf = CreateLeafNode(cursor->ptr[MAX], overflowArrKey, overflowArrLLNode);
+					Node *newLeaf = CreateLeafNode(cursor->ptr[MAX], overflowArrKey, overflowArrLLNode);
 
 					// step3.2.3: reconstruct the current node
 					ReconstructCurrentNode(cursor, newLeaf, overflowArrKey, overflowArrLLNode);
@@ -138,7 +138,7 @@ public:
 					if (cursor == root)
 					{
 						// if cursor is a root node, we create a new parent root
-						Node* parentRoot = new Node(MAX);
+						Node *parentRoot = new Node(MAX);
 						CreateParentNode(parentRoot, cursor, newLeaf);
 					}
 					else
@@ -151,7 +151,7 @@ public:
 				{
 					// step3.2.1: create a MAX + 1 sorted array for overflow scenario
 					int overflowArrKey[MAX_500MB + 1];
-					LLNode* overflowArrLLNode[MAX_500MB + 1];
+					LLNode *overflowArrLLNode[MAX_500MB + 1];
 					numOfNode += 1;
 
 					for (int i = 0; i < MAX; i++)
@@ -163,7 +163,7 @@ public:
 					insertKey(overflowArrKey, overflowArrLLNode, cursor->size, keyToInsert, location, true);
 
 					// step3.2.2: create a new leaf node
-					Node* newLeaf = CreateLeafNode(cursor->ptr[MAX], overflowArrKey, overflowArrLLNode);
+					Node *newLeaf = CreateLeafNode(cursor->ptr[MAX], overflowArrKey, overflowArrLLNode);
 
 					// step3.2.3: reconstruct the current node
 					ReconstructCurrentNode(cursor, newLeaf, overflowArrKey, overflowArrLLNode);
@@ -172,7 +172,7 @@ public:
 					if (cursor == root)
 					{
 						// if cursor is a root node, we create a new parent root
-						Node* parentRoot = new Node(MAX);
+						Node *parentRoot = new Node(MAX);
 						CreateParentNode(parentRoot, cursor, newLeaf);
 					}
 					else
@@ -181,14 +181,13 @@ public:
 						InsertParent(parent, newLeaf);
 					}
 				}
-				
 			}
 		}
 	}
 #pragma endregion
 
 #pragma region Search main function
-	void retrievedetails(int lowlimit, int highlimit, bufferPool *bufferPool)
+	void retrievedetails(int lowlimit, int highlimit, diskStorage *diskStorage)
 	{
 		bool retrievenode = true;
 		int numOfIndexAccess = 1, numOfBlkAccess = 1, numOfMatch = 0;
@@ -266,7 +265,7 @@ public:
 			numOfBlkAccess = tempAddress.size();
 			for (uint i = 0; i < numOfBlkAccess; i++)
 			{
-				for (uint j = 20; j <= bufferPool->getBlockSize(); j += 20)
+				for (uint j = 20; j <= diskStorage->getBlockSize(); j += 20)
 				{
 					void *recordAddress = (uchar *)tempAddress[i] + j;
 					if (dataBlock.size() < 5)
@@ -297,7 +296,6 @@ public:
 				for (uint j = 0; j < dataBlock[i].size(); j++)
 					cout << dataBlock[i][j] << " | ";
 				cout << endl;
-				
 			}
 			cout << "Number of Data Blocks accessed = " << numOfBlkAccess << endl
 				 << endl;
@@ -313,7 +311,8 @@ public:
 #pragma endregion
 
 #pragma region Delete main function
-	void RemoveEvent(int x, bufferPool* bufferPool)
+	void RemoveEvent(int x, diskStorage *diskStorage)
+
 	{
 		if(root != NULL)
 		{
@@ -329,27 +328,26 @@ public:
 				parent = cursor;
 				for (int i = 0; i < cursor->size; i++)
 				{
-					leftChildren = i - 1; 
-					rightChildern = i + 1; 
+					leftChildren = i - 1;
+					rightChildern = i + 1;
 
 					if (x < cursor->key[i])
 					{
 						cursor = cursor->ptr[i];
 						isFound = true;
 						break;
-
 					}
 				}
-				if (!isFound) {
+				if (!isFound)
+				{
 					leftChildren = cursor->size - 1;
 					rightChildern = cursor->size - 1 + 2;
 
 					cursor = cursor->ptr[cursor->size - 1 + 1];
 				}
-
 			}
 
-			//search for the key if it exists and remove the linked list
+			// search for the key if it exists and remove the linked list
 			bool found = false;
 			int pos;
 
@@ -358,12 +356,12 @@ public:
 				if (cursor->key[pos] == x)
 				{
 					found = true;
-					deleteLLNode(&cursor->llPtr[pos], bufferPool);
+					deleteLLNode(&cursor->llPtr[pos], diskStorage);
 					break;
 				}
 			}
 
-			if (!found)//if key does not exist in that leaf node
+			if (!found) // if key does not exist in that leaf node
 			{
 				cout << "No key is found! Deletion failed" << endl;
 				return;
@@ -384,10 +382,9 @@ public:
 					root = NULL;
 				}
 				return;
-
 			}
 
-			//deleting the key
+			// deleting the key
 			for (int i = pos; i < cursor->size; i++)
 			{
 				cursor->key[i] = cursor->key[i + 1];
@@ -396,7 +393,7 @@ public:
 
 			cursor->size--;
 
-			//underflow
+			// underflow
 			if (cursor->size < floor((MAX + 1) / 2))
 			{
 				isUnderFlow = true;
@@ -410,12 +407,14 @@ public:
 				// if the node keys is less than minimum, check if sibling able to borrow key
 				bool isCanBorrowSiblingKey = canBorrowSiblingKey(parent, leftChildren, rightChildern);
 
-				if (isCanBorrowSiblingKey) {
+				if (isCanBorrowSiblingKey)
+				{
 					bool isLeftSibling = true;
-					Node* siblingNode = NULL;
+					Node *siblingNode = NULL;
 					isLeftSibling = isLeftSiblingNode(&siblingNode, parent, leftChildren, rightChildern);
 
-					if (isLeftSibling) {
+					if (isLeftSibling)
+					{
 						borrowSiblingKey(cursor, siblingNode, true);
 
 						shiftPointer(cursor);
@@ -425,7 +424,8 @@ public:
 						parent->key[leftChildren] = cursor->key[0];
 						parent->llPtr[leftChildren] = cursor->llPtr[0];
 					}
-					else {
+					else
+					{
 						borrowSiblingKey(cursor, siblingNode, false);
 
 						shiftPointer(cursor);
@@ -436,11 +436,13 @@ public:
 						parent->llPtr[rightChildern - 1] = siblingNode->llPtr[0];
 					}
 				}
-				else {
+				else
+				{
 					// else we will need to merge with sibling node and delete the node
 
-					if (leftChildren >= 0) {
-						Node* leftNode = parent->ptr[leftChildren];
+					if (leftChildren >= 0)
+					{
+						Node *leftNode = parent->ptr[leftChildren];
 
 						// merge the current node keys to left sibling node
 						for (int i = leftNode->size, j = 0; j < cursor->size; i++, j++)
@@ -460,8 +462,9 @@ public:
 
 						deleteNode(cursor);
 					}
-					else if (rightChildern <= parent->size) {
-						Node* rightNode = parent->ptr[rightChildern];
+					else if (rightChildern <= parent->size)
+					{
+						Node *rightNode = parent->ptr[rightChildern];
 
 						// merge the current node keys to left sibling node
 						for (int i = cursor->size, j = 0; j < rightNode->size; i++, j++)
@@ -489,7 +492,6 @@ public:
 		}
 
 		return;
-
 	}
 #pragma endregion
 
@@ -570,10 +572,10 @@ private:
 			if (MAX == MAX_200MB)
 			{
 				// overflow in internal, create new internal node
-				Node* newInternalNode = new Node(MAX);
+				Node *newInternalNode = new Node(MAX);
 				// create virtual internal node to store the key
 				int tempKey[MAX_200MB + 1];
-				Node* tempPtr[MAX_200MB + 2];
+				Node *tempPtr[MAX_200MB + 2];
 				// increase the number of node by 1
 				numOfNode += 1;
 				for (int i = 0; i < MAX; i++)
@@ -613,7 +615,7 @@ private:
 				if (cursor == root)
 				{
 					// if the cursor is a root node, create new parent root
-					Node* parentRoot = new Node(MAX);
+					Node *parentRoot = new Node(MAX);
 					CreateParentNode(parentRoot, cursor, newInternalNode);
 				}
 				else
@@ -625,10 +627,10 @@ private:
 			else if (MAX == MAX_500MB)
 			{
 				// overflow in internal, create new internal node
-				Node* newInternalNode = new Node(MAX);
+				Node *newInternalNode = new Node(MAX);
 				// create virtual internal node to store the key
 				int tempKey[MAX_500MB + 1];
-				Node* tempPtr[MAX_500MB + 2];
+				Node *tempPtr[MAX_500MB + 2];
 				// increase the number of node by 1
 				numOfNode += 1;
 				for (int i = 0; i < MAX; i++)
@@ -668,7 +670,7 @@ private:
 				if (cursor == root)
 				{
 					// if the cursor is a root node, create new parent root
-					Node* parentRoot = new Node(MAX);
+					Node *parentRoot = new Node(MAX);
 					CreateParentNode(parentRoot, cursor, newInternalNode);
 				}
 				else
@@ -677,7 +679,6 @@ private:
 					InsertParent(findParent(root, cursor), newInternalNode);
 				}
 			}
-			
 		}
 	}
 
@@ -905,7 +906,7 @@ private:
 				for (int i = cursor->size; i > 0; i--)
 					cursor->key[i] = cursor->key[i - 1];
 
-				// shift child nodes arr to insert the child nodes 
+				// shift child nodes arr to insert the child nodes
 				for (int i = cursor->size + 1; i > 0; i--)
 					cursor->ptr[i] = cursor->ptr[i - 1];
 
@@ -941,8 +942,8 @@ private:
 				// remove the borrowed key
 				for (int i = 0; i < rightNode->size - 1; i++)
 					rightNode->key[i] = rightNode->key[i + 1];
-				
-				// remove the child node 
+
+				// remove the child node
 				for (int i = 0; i < rightNode->size; ++i)
 					rightNode->ptr[i] = rightNode->ptr[i + 1];
 
@@ -995,7 +996,7 @@ private:
 		}
 	}
 
-	void deleteLLNode(LLNode **pList, bufferPool *bufferPool)
+	void deleteLLNode(LLNode **pList, diskStorage *diskStorage)
 	{
 		LLNode *temp = NULL;
 		if (pList == NULL)
@@ -1004,35 +1005,39 @@ private:
 		while (*pList != NULL)
 		{
 			temp = *pList;
-			bufferPool->deleteRecord(temp->location);
+			diskStorage->deleteRecord(temp->location);
 			*pList = (*pList)->next;
 			free(temp);
 		}
 	}
 
-	void shiftPointer(Node* cursor) {
+	void shiftPointer(Node *cursor)
+	{
 
 		cursor->size++;
 		cursor->ptr[cursor->size] = cursor->ptr[cursor->size - 1];
 		cursor->ptr[cursor->size - 1] = NULL;
 	}
 
-	void shiftPointerSibling(Node* siblingNode, Node* nextNode) {
+	void shiftPointerSibling(Node *siblingNode, Node *nextNode)
+	{
 		siblingNode->size--;
 		siblingNode->ptr[siblingNode->size] = nextNode;
 		siblingNode->ptr[siblingNode->size + 1] = NULL;
 	}
 
-	void shiftArr(Node* node, bool isLeftSibling) {
-		if (isLeftSibling) {
+	void shiftArr(Node *node, bool isLeftSibling)
+	{
+		if (isLeftSibling)
+		{
 			for (int i = node->size; i > 0; i--)
 			{
 				node->key[i] = node->key[i - 1];
 				node->llPtr[i] = node->llPtr[i - 1];
-
 			}
 		}
-		else {
+		else
+		{
 			for (int i = 0; i < node->size; i++)
 			{
 				node->key[i] = node->key[i + 1];
@@ -1041,15 +1046,18 @@ private:
 		}
 	}
 
-	void borrowSiblingKey(Node* cursor, Node* siblingNode, bool isLeftSibling) {
-		if (isLeftSibling) {
+	void borrowSiblingKey(Node *cursor, Node *siblingNode, bool isLeftSibling)
+	{
+		if (isLeftSibling)
+		{
 			shiftArr(cursor, isLeftSibling);
-			
-			//transfer
+
+			// transfer
 			cursor->key[0] = siblingNode->key[siblingNode->size - 1];
 			cursor->llPtr[0] = siblingNode->llPtr[siblingNode->size - 1];
 		}
-		else {
+		else
+		{
 			cursor->key[cursor->size - 1] = siblingNode->key[0];
 			cursor->llPtr[cursor->size - 1] = siblingNode->llPtr[0];
 
@@ -1057,48 +1065,59 @@ private:
 		}
 	}
 
-	bool isLeftSiblingNode(Node** siblingNode, Node* parent, int leftChildIndex, int rightChildIndex) {
+	bool isLeftSiblingNode(Node **siblingNode, Node *parent, int leftChildIndex, int rightChildIndex)
+	{
 		bool isLeftSibling = true;
-		//Determine to borrow from left or right sibling node
-		if (leftChildIndex >= 0) {
+		// Determine to borrow from left or right sibling node
+		if (leftChildIndex >= 0)
+		{
 			(*siblingNode) = parent->ptr[leftChildIndex];
 
-			if ((*siblingNode)->size >= ceil((MAX + 1) / 2)) {
+			if ((*siblingNode)->size >= ceil((MAX + 1) / 2))
+			{
 				isLeftSibling = true;
 			}
 		}
-		else if (rightChildIndex <= parent->size) {
+		else if (rightChildIndex <= parent->size)
+		{
 			(*siblingNode) = parent->ptr[rightChildIndex];
 
-			if ((*siblingNode)->size >= ceil((MAX + 1) / 2)) {
+			if ((*siblingNode)->size >= ceil((MAX + 1) / 2))
+			{
 				isLeftSibling = false;
 			}
 		}
 		return isLeftSibling;
 	}
 
-	bool canBorrowSiblingKey(Node* parent, int leftChildIndex, int rightChildIndex) {
+	bool canBorrowSiblingKey(Node *parent, int leftChildIndex, int rightChildIndex)
+	{
 		bool canBorrow = false;
-		Node* siblingNode = NULL;
-		//Determine to borrow from left or right sibling node
-		if (leftChildIndex >= 0) {
+		Node *siblingNode = NULL;
+		// Determine to borrow from left or right sibling node
+		if (leftChildIndex >= 0)
+		{
 			siblingNode = parent->ptr[leftChildIndex];
 
-			if (siblingNode->size - 1 >= ceil((MAX + 1) / 2)) {
+			if (siblingNode->size - 1 >= ceil((MAX + 1) / 2))
+			{
 				canBorrow = true;
 			}
 		}
-		else if (rightChildIndex <= parent->size) {
+		else if (rightChildIndex <= parent->size)
+		{
 			siblingNode = parent->ptr[rightChildIndex];
 
-			if (siblingNode->size - 1 >= ceil((MAX + 1) / 2)) {
+			if (siblingNode->size - 1 >= ceil((MAX + 1) / 2))
+			{
 				canBorrow = true;
 			}
 		}
 		return canBorrow;
 	}
 
-	void deleteNode(Node* node) {
+	void deleteNode(Node *node)
+	{
 		delete[] node->key;
 		delete[] node->ptr;
 		delete[] node->location;
